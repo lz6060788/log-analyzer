@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
-import { CheckCircleIcon, ArrowPathIcon } from '@heroicons/vue/24/solid'
+import { CheckCircleIcon, ArrowPathIcon } from '@heroicons/vue/24/solid';
+
 </script>
 
 <template>

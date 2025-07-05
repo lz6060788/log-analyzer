@@ -54,7 +54,7 @@ def upload_file():
     except UnicodeDecodeError as e:
         return None, 400, '文件解析失败'
 
-@client_bp.route('/query_accounts_times', methods=['GET'])
+@client_bp.route('/query_accounts_logs', methods=['GET'])
 @standard_json_response
 def get_accounts_query():
     clientreq = session.get('clientPropcessor')

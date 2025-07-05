@@ -42,7 +42,7 @@ def standard_json_response(func):
                 data, code, message = result, 200, 'Success'
 
             convert_data(data)
-                
+
             return jsonify({
                 'code': code,
                 'data': data,
