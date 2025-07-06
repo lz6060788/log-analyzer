@@ -39,7 +39,7 @@ def standard_json_response(func):
             if isinstance(result, tuple):
                 data, code, message = result
             else:
-                data, code, message = result, 200, 'Success'
+                data, code, message = result, 0, 'Success'
 
             convert_data(data)
 

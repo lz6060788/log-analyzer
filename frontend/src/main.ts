@@ -6,6 +6,7 @@ import router from './router'
 
 import '@/assets/css/base.css'
 import 'virtual:uno.css'
+import 'element-plus/dist/index.css'
 
 const app = createApp(App)
 

@@ -2,20 +2,31 @@ import { clientLogApi } from '@/api';
 import { useGlobalStore } from '@/store/global';
 import { LogAnalyserType, LogAnalyserStatusType } from '@/types';
 import { ElNotification } from 'element-plus'
+import { computed, ref } from 'vue';
+import { storeToRefs } from 'pinia'
 
-const { setLogAnalyserStatus, getLogAnalyserStatus } = useGlobalStore()
+
 export const useClientLogAnalyser = () => {
+  const store = useGlobalStore()
+  const { setLogAnalyserStatus, getLogAnalyserStatus } = store
+  const { logAnalyserStatusMap } = storeToRefs(store)
+  const clientLogAnalyserStatus = computed(() => logAnalyserStatusMap.value[LogAnalyserType.Client])
   const initClientLogAnalyser = async (file: File) => {
     setLogAnalyserStatus(LogAnalyserType.Client, LogAnalyserStatusType.None)
     try {
       const formData = new FormData();
       formData.append('file', file);
+      setLogAnalyserStatus(LogAnalyserType.Client, LogAnalyserStatusType.Running)
       const res = await clientLogApi.uploadClientLog(formData)
-      if (res.status === 200) {
+      if (res.code === 0) {
+        ElNotification.success({
+          title: '提示',
+          message: '客户端全量日志已上传并解析成功',
+        })
         setLogAnalyserStatus(LogAnalyserType.Client, LogAnalyserStatusType.Ready)
       } else {
         setLogAnalyserStatus(LogAnalyserType.Client, LogAnalyserStatusType.Error)
-        throw new Error(res.data.message)
+        throw new Error(res.message)
       }
     } catch (e: any) {
       ElNotification.error({
@@ -44,6 +55,7 @@ export const useClientLogAnalyser = () => {
   }
 
   return {
+    clientLogAnalyserStatus,
     initClientLogAnalyser,
     getAccountsLogs
   }
