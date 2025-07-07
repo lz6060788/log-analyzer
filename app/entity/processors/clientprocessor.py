@@ -332,6 +332,7 @@ class ClientProcessor:
                     cnt += len(v3)
         print("总请求数：%d. pb请求数：%d, json请求数：%d, funid请求数：%d. 统计请求数：%d, 统计结果:【%s】" % (counts, counts_pb, counts_json, counts_funid, cnt, cnt==(counts_pb+counts_json+counts_funid)))
         print("统计耗时：", time.perf_counter() - t1)
+        return sum_requests
 
 
     def get_fund_by_fund_token(self, fund_token):

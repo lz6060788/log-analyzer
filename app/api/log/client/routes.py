@@ -24,17 +24,17 @@ def profile():
 def upload_file():
     # 检查是否有文件部分
     if 'file' not in request.files:
-        return None, 400, '文件不存在'
+        return None, -1, '文件不存在'
     
     file = request.files['file']
 
     # 如果用户没有选择文件
     if file.filename == '':
-        return None, 400, '文件不存在'
+        return None, -1, '文件不存在'
 
     # 检查文件类型是否允许
     if not (file and allowed_file(file.filename)):
-        return None, 400, '非日志文件，请勿上传'
+        return None, -1, '非日志文件，请勿上传'
     
     try:
         # 尝试以文本形式读取
@@ -52,13 +52,22 @@ def upload_file():
         print(clientreq.query_accounts_df)
         return None
     except UnicodeDecodeError as e:
-        return None, 400, '文件解析失败'
+        return None, -1, '文件解析失败'
+
+@client_bp.route('/query_fetch_statistics', methods=['GET'])
+@standard_json_response
+def query_fetch_statistics():
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.show_request_statics()
+    else:
+        return None, -1, '请先上传文件'
 
 @client_bp.route('/query_accounts_logs', methods=['GET'])
 @standard_json_response
-def get_accounts_query():
+def query_accounts_logs():
     clientreq = session.get('clientPropcessor')
     if clientreq:
         return clientreq.query_accounts_df
     else:
-        return None, 400, '请先上传文件'
+        return None, -1, '请先上传文件'

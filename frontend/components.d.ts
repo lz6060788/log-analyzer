@@ -8,8 +8,15 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AccountsPanel: typeof import('./src/components/clientLogFilter/accountsPanel.vue')['default']
+    CopyLink: typeof import('./src/components/common/copyLink.vue')['default']
+    CopyText: typeof import('./src/components/common/copyText.vue')['default']
+    DataPanel: typeof import('./src/components/common/dataPanel.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElIcon: typeof import('element-plus/es')['ElIcon']
+    ElOption: typeof import('element-plus/es')['ElOption']
+    ElSelect: typeof import('element-plus/es')['ElSelect']
+    ElText: typeof import('element-plus/es')['ElText']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     IconCommunity: typeof import('./src/components/icons/IconCommunity.vue')['default']
@@ -21,6 +28,7 @@ declare module 'vue' {
     ModuleList: typeof import('./src/components/home/moduleList/index.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    StatisticPanel: typeof import('./src/components/clientLogFilter/statisticPanel.vue')['default']
     TheWelcome: typeof import('./src/components/TheWelcome.vue')['default']
     WelcomeItem: typeof import('./src/components/WelcomeItem.vue')['default']
   }

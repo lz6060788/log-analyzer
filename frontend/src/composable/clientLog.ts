@@ -4,6 +4,7 @@ import { LogAnalyserType, LogAnalyserStatusType } from '@/types';
 import { ElNotification } from 'element-plus'
 import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia'
+import { useClientLogStore } from '@/store/clientLog';
 
 
 export const useClientLogAnalyser = () => {
@@ -11,6 +12,13 @@ export const useClientLogAnalyser = () => {
   const { setLogAnalyserStatus, getLogAnalyserStatus } = store
   const { logAnalyserStatusMap } = storeToRefs(store)
   const clientLogAnalyserStatus = computed(() => logAnalyserStatusMap.value[LogAnalyserType.Client])
+
+  const clientStore = useClientLogStore();
+  const {
+    setFetchStatisticList,
+    setAccountsFetchMap
+  } = clientStore;
+
   const initClientLogAnalyser = async (file: File) => {
     setLogAnalyserStatus(LogAnalyserType.Client, LogAnalyserStatusType.None)
     try {
@@ -42,9 +50,31 @@ export const useClientLogAnalyser = () => {
         title: 'Error',
         message: '全量日志未解析完成',
       })
+      return;
     }
     try {
       const res = await clientLogApi.getAccountsQuery()
+      setAccountsFetchMap(res.data)
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getStatisticData = async () => {
+    if (getLogAnalyserStatus(LogAnalyserType.Client) === LogAnalyserStatusType.None) {
+      ElNotification.error({
+        title: 'Error',
+        message: '全量日志未解析完成',
+      })
+      return;
+    }
+    try {
+      const res = await clientLogApi.getFetchStatistic()
+      setFetchStatisticList(res.data)
       return res.data
     } catch (e: any) {
       ElNotification.error({
@@ -57,6 +87,7 @@ export const useClientLogAnalyser = () => {
   return {
     clientLogAnalyserStatus,
     initClientLogAnalyser,
-    getAccountsLogs
+    getAccountsLogs,
+    getStatisticData
   }
 }

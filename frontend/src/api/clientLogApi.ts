@@ -12,6 +12,9 @@ const api = {
   },
   getAccountsQuery: (): Promise<RespType<any[]>> => {
     return apiClient.get('/log/client/query_accounts_logs');
+  },
+  getFetchStatistic: (): Promise<RespType<any[]>> => {
+    return apiClient.get('/log/client/query_fetch_statistics');
   }
 };
 
