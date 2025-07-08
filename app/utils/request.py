@@ -41,7 +41,8 @@ def standard_json_response(func):
             else:
                 data, code, message = result, 0, 'Success'
 
-            convert_data(data)
+            if (data != None):
+                convert_data(data)
 
             return jsonify({
                 'code': code,
@@ -50,7 +51,7 @@ def standard_json_response(func):
             })
         except Exception as e:
             return jsonify({
-                'code': 500,
+                'code': -1,
                 'data': None,
                 'message': str(e)
             })

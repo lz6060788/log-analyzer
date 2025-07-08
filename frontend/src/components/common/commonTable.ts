@@ -32,6 +32,7 @@ export default defineComponent({
         h(ElTable, {
           data: displayData.value,
           style: { width: '100%' },
+          maxHeight: '750px',
           border: true,
           stripe: true,
           size: 'small'
@@ -55,7 +56,7 @@ export default defineComponent({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'end',
-                marginTop: '16px',
+                marginTop: '16px'
               },
             },
             [

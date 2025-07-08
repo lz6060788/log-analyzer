@@ -21,6 +21,10 @@ class ClientProcessor:
         }
         self.skip_word = ['|timeout|']
         self.req_pairs = {}
+        self.counts = 0
+        self.counts_pb = 0
+        self.counts_json = 0
+        self.counts_funid = 0
         self.request_statics = {"pb":{},"json":{},"json_funid":{}}
         self.illegal_reqs = []
         self.timeout_reqs = []
@@ -260,6 +264,9 @@ class ClientProcessor:
                              if (len(json.dumps(value["request"])) <= 2 or len(json.dumps(value["response"])) <= 2)}
         self.req_pairs = {key:value for key, value in self.req_pairs.items() 
                           if (len(json.dumps(value["request"])) > 2 and len(json.dumps(value["response"])) > 2)}
+        self._parse_request_statistics()
+        self._parse_account_query()
+        self._parse_fund_query()
 
 
     def format_size(self, size):
@@ -268,10 +275,9 @@ class ClientProcessor:
                 return f"{size:.1f}{unit}" if unit != 'B' else f"{int(size)}{unit}"
             size /= 1024.0
         return f"{size:.1f}P"
-    
-    
-    def show_request_statics(self):
-        t1 = time.perf_counter()
+
+    # 统计数据初始化
+    def _parse_request_statistics(self):
         self.request_statics = {"pb":{},"json":{},"json_funid":{}}
         request_statics = self.request_statics
         counts = 0
@@ -279,14 +285,14 @@ class ClientProcessor:
         counts_json = 0
         counts_funid = 0
         for key, item in self.req_pairs.items():
-            counts += 1
+            self.counts += 1
             request = item["request"]
             req_time = item["req_time"]
             req_type = item["protocol"]
             servicename = ""
             action = ""
             if req_type == "pb":
-                counts_pb += 1
+                self.counts_pb += 1
                 try:
                     if "servicename" in json.dumps(request):
                         servicename = request["servicename"]
@@ -302,7 +308,7 @@ class ClientProcessor:
                     print(key, request)
                     break
             elif req_type == "json":
-                counts_json += 1
+                self.counts_json += 1
                 try:
                     if "servicename" in json.dumps(request):
                         servicename = request["servicename"]
@@ -313,7 +319,7 @@ class ClientProcessor:
                     print(key, request)
                     break
             elif req_type == "json_funid":
-                counts_funid += 1
+                self.counts_funid += 1
                 servicename = request["method"]
                 action = str(request["params"]["FunID"])
             if not servicename in request_statics[req_type].keys():
@@ -321,6 +327,10 @@ class ClientProcessor:
             if action not in request_statics[req_type][servicename].keys():
                 request_statics[req_type][servicename][action] = []
             request_statics[req_type][servicename][action].append({"key":key, "lens":len(json.dumps(item)), "req_time":req_time})
+    
+    # 展示统计数据
+    def show_request_statics(self):
+        request_statics = self.request_statics
         
         cnt = 0
         sum_requests = []
@@ -330,11 +340,11 @@ class ClientProcessor:
                     total_lens = sum(d["lens"] for d in v3)
                     sum_requests.append({"protocol":k1, "servicename":k2, "action":k3, "counts":len(v3), "avg_lens":self.format_size(total_lens/len(v3)), "total_lens":self.format_size(total_lens)})
                     cnt += len(v3)
-        print("总请求数：%d. pb请求数：%d, json请求数：%d, funid请求数：%d. 统计请求数：%d, 统计结果:【%s】" % (counts, counts_pb, counts_json, counts_funid, cnt, cnt==(counts_pb+counts_json+counts_funid)))
-        print("统计耗时：", time.perf_counter() - t1)
+        print("总请求数：%d. pb请求数：%d, json请求数：%d, funid请求数：%d. 统计请求数：%d, 统计结果:【%s】" % (self.counts, self.counts_pb, self.counts_json, self.counts_funid, cnt, cnt==(self.counts_pb+self.counts_json+self.counts_funid)))
         return sum_requests
 
 
+    # 根据fund_token获取账户数据
     def get_fund_by_fund_token(self, fund_token):
         if fund_token in self.fundtoken_dict.keys():
             return self.fundtoken_dict[fund_token]
@@ -342,6 +352,7 @@ class ClientProcessor:
             return fund_token
 
 
+    # 查询请求列表
     def get_request_list(self, protocol, servicename, cmd):
         request_statics = self.request_statics
         if protocol in request_statics.keys():
@@ -356,6 +367,7 @@ class ClientProcessor:
             return []
 
 
+    # 解析某次账户请求数据
     def _handle_once_account_query(self, query_data):
         result = []
         for item in query_data:
@@ -422,8 +434,8 @@ class ClientProcessor:
             print(json.dumps(response))
         print("-"*100)
     
-    
-    def handle_account_query(self, req_time = ""):
+    # 解析账户请求数据
+    def _parse_account_query(self):
         for query_time, user_account_str in self.query_accounts.items():
             user_account_dict = json.loads(user_account_str)["result"]["data"]["account_fn"]["list_account_portfolio"]["edges"]
             df_user_account = self._handle_once_account_query(user_account_dict)
@@ -459,13 +471,12 @@ class ClientProcessor:
                 self.query_accounts_df[rsp_time] = df_user_account
                 self.fundtoken_dict.update({k:v for k, v in df_user_account.apply(self._create_fundtoken_dict, axis=1)})
                 self.fund_dict.update({k:v for k, v in df_user_account.apply(self._create_fund_dict, axis=1)})
-
+    
+    # 返回某时间的账户请求数据
+    def handle_account_query(self, req_time = ""):
         if req_time in self.query_accounts_df.keys():
             return self.query_accounts_df[req_time]
-        if req_time == "":
-            return self.query_accounts_df
-        
-        
+ 
     def handle_basket_order_push(self):
         for req_time, raw_response in self.basketorder_push_raw:
             response_json = json.loads(raw_response)
@@ -508,9 +519,8 @@ class ClientProcessor:
                 self.algorithm_push[InstanceID][action] = []
             self.algorithm_push[InstanceID][action].append(response_dict)
 
-    
-    # 资金查询
-    def handle_fund_query(self):
+    # 解析资金查询数据
+    def _parse_fund_query(self):
         self.query_account_asset_dict = {}
         self.query_rzrq_account_asset_dict = {}
         self.query_ggt_account_asset_dict = {}
@@ -595,6 +605,9 @@ class ClientProcessor:
                     "message":"未返回资金查询结果"
                 }
                 self.query_asset_failed_list.append(result)
+    
+    # 各类资金账户请求汇总列表
+    def handle_fund_query(self):
         # 返回查询fund_key
         fund_list = []
         for key, item in self.query_account_asset_dict.items():
@@ -605,7 +618,7 @@ class ClientProcessor:
             fund_list.append('%s|ggt|%d' % (key, len(item)))
         return fund_list
     
-    
+    # 查询账户的资金请求数据
     def show_fund_query(self, fund_key):
         query_type_dict = {
             "normal":self.query_account_asset_dict,
@@ -659,6 +672,33 @@ class ClientProcessor:
         print("\n查询失败请求数", len(query_data_failed))
         display(df_failed)
 
+    # 获取资金汇总数据，非jupyter使用
+    def get_fund_query_data(self):
+        columns_query_type_dict = {
+            "normal":["rsp_time", "available_value", "balance_value", "currency_msg",
+                      "frozen_value", "market_value", "total_assets", "total_net_value"],
+            "rzrq":["rsp_time", "EnableBalance", "AvailableValue", "AvailableMargin",
+                    "FinEnableQuota", "SloEnableQuota", "FinCompactalance", "SloCompactBalance",
+                    "FundAsset", "TotalAssets", "NetMoney", "WT_ZJ_JZC"],
+            "ggt":["rsp_time", "TotalAssets", "AvailableValue", "GGT_SRZS", "GGT_ZTCZ","GGT_ZTRZ",
+                   "GGT_SSCZ","GGT_SSRZ", "GGT_YSCZZJ", "GGT_HCJE","GGT_HRJE", "GGT_SYJE", "GGT_ZJKM", "GGT_SSZYJE"],
+            "failed":["rsp_time", "fund", "req_id", "code", "message"],
+        }
+        all_data_dict = {
+            'normal': {},
+            'rzrq': {},
+            'ggt': {},
+            'failed': {}
+        }
+
+        for key, value in self.query_account_asset_dict.items():
+            all_data_dict['normal'][key] = pd.DataFrame(value, columns=columns_query_type_dict['normal']) if len(value) else {}
+        for key, value in self.query_rzrq_account_asset_dict.items():
+            all_data_dict['rzrq'][key] = pd.DataFrame(value, columns=columns_query_type_dict['rzrq']) if len(value) else {}
+        for key, value in self.query_ggt_account_asset_dict.items():
+            all_data_dict['ggt'][key] = pd.DataFrame(value, columns=columns_query_type_dict['ggt']) if len(value) else {}
+        all_data_dict['failed']['all'] = pd.DataFrame(self.query_asset_failed_list, columns=columns_query_type_dict['failed']) if len(value) else {}
+        return all_data_dict
 
     # 持仓查询
     def handle_position_query(self):
@@ -1059,7 +1099,7 @@ class ClientProcessor:
                 result["rsp_time"] = rsp_time
                 result["req_id"] = key
                 result["type"] = "normal"
-                self.query_trade_failed_list.append(result)
+                self.query_trade_dict[fund]["%s|%s" % (rsp_time, key)] = result
         trade_reqlist = self.get_request_list("json_funid", "stockrzrq", "500014")
         for key in trade_reqlist:
             value = self.req_pairs[key]
@@ -1086,7 +1126,7 @@ class ClientProcessor:
                 result["rsp_time"] = rsp_time
                 result["req_id"] = key
                 result["type"] = "rzrq"
-                self.query_trade_failed_list.append(result)
+                self.query_rzrq_trade_dict[fund]["%s|%s" % (rsp_time, key)] = result
         trade_reqlist = self.get_request_list("json_funid", "stockths", "610007")
         for key in trade_reqlist:
             value = self.req_pairs[key]
@@ -1113,7 +1153,7 @@ class ClientProcessor:
                 result["rsp_time"] = rsp_time
                 result["req_id"] = key
                 result["type"] = "ggt"
-                self.query_trade_failed_list.append(result)
+                self.query_ggt_trade_dict[fund]["%s|%s" % (rsp_time, key)] = result
 
         fundlist = []
         for fund, querytimedata in self.query_trade_dict.items():
@@ -1140,7 +1180,10 @@ class ClientProcessor:
             querytime = key.split("|")[0]
             reqid = key.split("|")[1]
             self.trade_querytime_reqid[querytime] = reqid
-            querytime_list.append("%s|%s" % (querytime,  len(querydata)))
+            if type(querydata) == dict:
+                querytime_list.append("%s|-1" % (querytime))
+            else:
+                querytime_list.append("%s|%s" % (querytime,  len(querydata)))
         sorted_querytime_list = [item for item in sorted(querytime_list, key=lambda item: datetime.strptime(item.split('|')[0], '%Y%m%d %H:%M:%S.%f'), reverse=True)]
         return sorted_querytime_list
     
@@ -1176,6 +1219,10 @@ class ClientProcessor:
         print("filter_stockcode:", code)
         if cnt == 0:
             print("本次成交查询结果为空")
+        elif cnt < 0:
+            print("\n本次查询请求出错")
+            querydata = typequerydict[querytype][fund]["%s|%s" % (querytime, reqid)]
+            print(querydata)
         else:
             querydata = typequerydict[querytype][fund]["%s|%s" % (querytime, reqid)]
             df_querytrade = pd.DataFrame(querydata, columns = typecolumn[querytype])

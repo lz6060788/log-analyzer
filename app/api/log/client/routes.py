@@ -71,3 +71,12 @@ def query_accounts_logs():
         return clientreq.query_accounts_df
     else:
         return None, -1, '请先上传文件'
+    
+@client_bp.route('/query_fund_logs', methods=['GET'])
+@standard_json_response
+def query_funds_data():
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_fund_query_data()
+    else:
+        return None, -1, '请先上传文件'

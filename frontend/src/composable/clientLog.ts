@@ -16,7 +16,8 @@ export const useClientLogAnalyser = () => {
   const clientStore = useClientLogStore();
   const {
     setFetchStatisticList,
-    setAccountsFetchMap
+    setAccountsFetchMap,
+    setFundFetchMap
   } = clientStore;
 
   const initClientLogAnalyser = async (file: File) => {
@@ -54,8 +55,12 @@ export const useClientLogAnalyser = () => {
     }
     try {
       const res = await clientLogApi.getAccountsQuery()
-      setAccountsFetchMap(res.data)
-      return res.data
+      if (res.code === 0) {
+        setAccountsFetchMap(res.data)
+        return res.data
+      } else {
+        throw new Error(res.message)
+      }
     } catch (e: any) {
       ElNotification.error({
         title: 'Error',
@@ -74,7 +79,34 @@ export const useClientLogAnalyser = () => {
     }
     try {
       const res = await clientLogApi.getFetchStatistic()
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
       setFetchStatisticList(res.data)
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getFundLogs = async () => {
+    // if (getLogAnalyserStatus(LogAnalyserType.Client) === LogAnalyserStatusType.None) {
+    //   ElNotification.error({
+    //     title: 'Error',
+    //     message: '全量日志未解析完成',
+    //   })
+    //   return;
+    // }
+    try {
+      const res = await clientLogApi.getFundQuery();
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      setFundFetchMap(res.data)
+      console.log(res.data)
       return res.data
     } catch (e: any) {
       ElNotification.error({
@@ -88,6 +120,7 @@ export const useClientLogAnalyser = () => {
     clientLogAnalyserStatus,
     initClientLogAnalyser,
     getAccountsLogs,
-    getStatisticData
+    getStatisticData,
+    getFundLogs
   }
 }

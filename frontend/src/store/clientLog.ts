@@ -12,10 +12,17 @@ export const useClientLogStore = defineStore('clientLog', () => {
     accountsFetchMap.value = data
   }
 
+  const fundFetchMap = ref<any>({});
+  const setFundFetchMap = (data: any) => {
+    fundFetchMap.value = data
+  }
+
   return {
     fetchStatisticList,
     setFetchStatisticList,
     accountsFetchMap,
-    setAccountsFetchMap
+    setAccountsFetchMap,
+    fundFetchMap,
+    setFundFetchMap
   }
 })
