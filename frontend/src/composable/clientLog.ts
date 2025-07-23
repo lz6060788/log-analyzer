@@ -17,7 +17,9 @@ export const useClientLogAnalyser = () => {
   const {
     setFetchStatisticList,
     setAccountsFetchMap,
-    setFundFetchMap
+    setFundFetchMap,
+    setPositionFetchMap,
+    setOrderFetchMap
   } = clientStore;
 
   const initClientLogAnalyser = async (file: File) => {
@@ -46,11 +48,7 @@ export const useClientLogAnalyser = () => {
   }
 
   const getAccountsLogs = async () => {
-    if (getLogAnalyserStatus(LogAnalyserType.Client) === LogAnalyserStatusType.None) {
-      ElNotification.error({
-        title: 'Error',
-        message: '全量日志未解析完成',
-      })
+    if (!checkoutClientLogAnalyserStatus()) {
       return;
     }
     try {
@@ -70,11 +68,7 @@ export const useClientLogAnalyser = () => {
   }
 
   const getStatisticData = async () => {
-    if (getLogAnalyserStatus(LogAnalyserType.Client) === LogAnalyserStatusType.None) {
-      ElNotification.error({
-        title: 'Error',
-        message: '全量日志未解析完成',
-      })
+    if (!checkoutClientLogAnalyserStatus()) {
       return;
     }
     try {
@@ -93,13 +87,9 @@ export const useClientLogAnalyser = () => {
   }
 
   const getFundLogs = async () => {
-    // if (getLogAnalyserStatus(LogAnalyserType.Client) === LogAnalyserStatusType.None) {
-    //   ElNotification.error({
-    //     title: 'Error',
-    //     message: '全量日志未解析完成',
-    //   })
-    //   return;
-    // }
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
     try {
       const res = await clientLogApi.getFundQuery();
       if (res.code !== 0) {
@@ -116,11 +106,59 @@ export const useClientLogAnalyser = () => {
     }
   }
 
+  const getPositionLogs = async () => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getPositionQuery()
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      setPositionFetchMap(res.data)
+      return res.data
+    } catch (e: any) {
+}
+  }
+
+  const getOrderLogs = async () => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getOrderQuery()
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      console.log(res.data)
+      setOrderFetchMap(res.data)
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  function checkoutClientLogAnalyserStatus () {
+    // if (getLogAnalyserStatus(LogAnalyserType.Client) === LogAnalyserStatusType.None) {
+    //   ElNotification.error({
+    //     title: 'Error',
+    //     message: '全量日志未解析完成',
+    //   })
+    //   return false;
+    // }
+    return true
+  }
+
   return {
     clientLogAnalyserStatus,
     initClientLogAnalyser,
     getAccountsLogs,
     getStatisticData,
-    getFundLogs
+    getFundLogs,
+    getPositionLogs,
+    getOrderLogs
   }
 }

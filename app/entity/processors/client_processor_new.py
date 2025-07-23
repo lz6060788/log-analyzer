@@ -1,0 +1,832 @@
+"""
+重构后的主控制器
+整合所有模块，提供统一接口
+"""
+
+import pandas as pd
+from typing import Dict, List, Any, Optional
+
+from .base_processor import BaseProcessor
+from .statistics_processor import StatisticsProcessor
+from .account_processor import AccountProcessor
+from .fund_processor import FundProcessor
+from .position_processor import PositionProcessor
+from .order_processor import OrderProcessor
+from .trade_processor import TradeProcessor
+from .models import ProcessingState, RequestPairsDict
+from .ipo_processor import IPOProcessor
+from .basket_processor import BasketProcessor
+from .algorithm_processor import AlgorithmProcessor
+from .condition_processor import ConditionProcessor
+from .financing_processor import FinancingProcessor
+
+
+class ClientProcessorNew:
+    """重构后的客户端处理器主类"""
+    
+    def __init__(self, file_list: List[str]):
+        """
+        初始化处理器
+        
+        Args:
+            file_list: 文件内容列表
+        """
+        # 设置pandas显示选项
+        pd.set_option('display.max_rows', 50)
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.width', 1000)
+        pd.set_option('display.float_format', '{:.2f}'.format)
+        
+        # 初始化基础处理器
+        self.base_processor = BaseProcessor()
+        self.state = self.base_processor.state
+        self.req_pairs = self.base_processor.req_pairs
+        
+        # 初始化各模块处理器
+        self.statistics_processor = StatisticsProcessor(self.state, self.req_pairs, self.base_processor)
+        self.account_processor = AccountProcessor(self.state, self.req_pairs, self.base_processor)
+        self.fund_processor = FundProcessor(self.state, self.req_pairs, self.base_processor)
+        self.position_processor = PositionProcessor(self.state, self.req_pairs, self.base_processor)
+        self.order_processor = OrderProcessor(self.state, self.req_pairs, self.base_processor)
+        self.trade_processor = TradeProcessor(self.state, self.req_pairs, self.base_processor)
+        self.ipo_processor = IPOProcessor(self.state, self.req_pairs, self.base_processor)
+        self.basket_processor = BasketProcessor(self.state, self.req_pairs, self.base_processor)
+        self.algorithm_processor = AlgorithmProcessor(self.state, self.req_pairs, self.base_processor)
+        self.condition_processor = ConditionProcessor(self.state, self.req_pairs, self.base_processor)
+        self.financing_processor = FinancingProcessor(self.state, self.req_pairs, self.base_processor)
+        
+        # 存储文件列表
+        self.file_list = file_list
+        
+        # 初始化数据存储
+        self._init_data_storage()
+    
+    def _init_data_storage(self) -> None:
+        """
+        初始化数据存储
+        """
+        # 资金查询相关
+        self.query_account_asset_dict = {}
+        self.query_rzrq_account_asset_dict = {}
+        self.query_ggt_account_asset_dict = {}
+        self.query_asset_failed_list = []
+        
+        # 持仓查询相关
+        self.query_account_stock_dict = {}
+        self.query_rzrq_account_stock_dict = {}
+        self.query_ggt_account_stock_dict = {}
+        self.query_stock_failed_list = []
+        
+        # 委托查询相关
+        self.query_order_dict = {}
+        self.query_rzrq_order_dict = {}
+        self.query_ggt_order_dict = {}
+        self.query_order_df = {}
+        
+        # 成交查询相关
+        self.query_trade_dict = {}
+        self.query_rzrq_trade_dict = {}
+        self.query_ggt_trade_dict = {}
+        self.query_trade_df = {}
+        
+        # 新股申购相关
+        self.xgsg_query_list = []
+        
+        # 可融资标的券查询相关
+        self.query_finable_security_dict = {}
+        self.current_finable_security = ""
+        self.finable_security_dict = {}
+        
+        # 篮子交易相关
+        self.singleorder_list = []
+        self.singleorder_cancellist = []
+        self.basketorder_list = []
+        self.basketorder_op_list = []
+        self.basketorder_detail_dict = {}
+        self.basketorder_push_raw = []
+        self.basketorder_push = {}
+        self.basketorder_push_cnts = 0
+        
+        # 算法交易相关
+        self.algorithm_push_raw = []
+        self.algorithm_push = {}
+        self.algorithm_list = []
+        self.algorithm_detail_dcit = {}
+        self.algorithm_query_dict = {}
+        self.query_algorithm_df = {}
+        
+        # 条件交易相关
+        self.gradecondition_query_dict = {}
+        self.query_gradecondition_df = {}
+        self.gradecondition_create = []
+        self.grade_condition_info = {}
+        self.gradecondition_push = {}
+        self.gradecondition_push_instruction = []
+        self.gradecondition_push_condition = []
+        self.gradecondition_push_order = []
+    
+    def parse(self) -> None:
+        """
+        解析日志文件
+        """
+        # 基础解析
+        self.base_processor.parse(self.file_list)
+        self.state = self.base_processor.state
+        self.req_pairs = self.base_processor.req_pairs
+        
+        # 统计处理
+        self.statistics_processor.parse_request_statistics()
+        
+        # 账户查询处理
+        self.account_processor.parse_account_query()
+        
+        # 资金查询处理
+        self.fund_processor.parse_fund_query()
+        
+        # 持仓查询处理
+        self.position_processor.parse_position_query()
+        
+        # 委托查询处理
+        self.order_processor.parse_order_query()
+        
+        # 成交查询处理
+        self.trade_processor.parse_trade_query()
+
+        # 新股申购查询处理
+        self.ipo_processor.parse_ipo_query()
+        self.ipo_processor.parse_ipo_lottery_query()
+
+        # 篮子交易查询处理
+        self.basket_processor.parse_basket_query()
+
+        # 算法交易查询处理
+        self.algorithm_processor.parse_algorithm_query()
+
+        # 条件交易查询处理
+        self.condition_processor.parse_condition_query()
+
+        # 融资融券相关解析
+        self.financing_processor.parse_financing_query()
+    
+    def show_request_statics(self) -> List[Dict[str, Any]]:
+        """
+        显示请求统计
+        
+        Returns:
+            统计结果列表
+        """
+        return self.statistics_processor.show_request_statics()
+    
+    def show_processing_summary(self) -> None:
+        """
+        显示处理汇总信息
+        """
+        self.statistics_processor.show_processing_summary()
+        self.account_processor.show_account_summary()
+        self.fund_processor.show_fund_summary()
+        self.position_processor.show_position_summary()
+        self.order_processor.show_order_summary()
+        self.trade_processor.show_trade_summary()
+    
+    def handle_account_query(self, req_time: str = "") -> Optional[pd.DataFrame]:
+        """
+        处理账户查询
+        
+        Args:
+            req_time: 请求时间
+            
+        Returns:
+            账户查询结果DataFrame
+        """
+        return self.account_processor.handle_account_query(req_time)
+    
+    def get_fund_by_fund_token(self, fund_token: str) -> str:
+        """
+        根据fund_token获取账户名称
+        
+        Args:
+            fund_token: 资金令牌
+            
+        Returns:
+            账户名称
+        """
+        return self.account_processor.get_fund_by_fund_token(fund_token)
+    
+    def get_request_list(self, protocol: str, servicename: str, cmd: str) -> List[str]:
+        """
+        获取请求列表
+        
+        Args:
+            protocol: 协议类型
+            servicename: 服务名称
+            cmd: 命令
+            
+        Returns:
+            请求ID列表
+        """
+        return self.base_processor.get_request_list(protocol, servicename, cmd)
+    
+    def show_request_and_response(self, req_id: str, isfullreqs: bool = True) -> None:
+        """
+        显示请求和响应
+        
+        Args:
+            req_id: 请求ID
+            isfullreqs: 是否显示完整请求
+        """
+        self.base_processor.show_request_and_response(req_id, isfullreqs)
+    
+    def get_all_accounts(self) -> List[str]:
+        """
+        获取所有账户列表
+        
+        Returns:
+            账户列表
+        """
+        return self.account_processor.get_all_accounts()
+    
+    def export_statistics_to_dataframe(self) -> pd.DataFrame:
+        """
+        导出统计数据到DataFrame
+        
+        Returns:
+            统计数据DataFrame
+        """
+        return self.statistics_processor.export_statistics_to_dataframe()
+    
+    def export_accounts_to_dataframe(self) -> pd.DataFrame:
+        """
+        导出账户信息到DataFrame
+        
+        Returns:
+            账户信息DataFrame
+        """
+        return self.account_processor.export_accounts_to_dataframe()
+    
+    def get_processing_summary(self) -> Dict[str, Any]:
+        """
+        获取处理汇总信息
+        
+        Returns:
+            处理汇总字典
+        """
+        summary = {
+            "statistics": self.statistics_processor.get_statistics_summary(),
+            "accounts": self.account_processor.get_account_summary(),
+            "funds": self.fund_processor.get_fund_summary(),
+            "positions": self.position_processor.get_position_summary(),
+            "orders": self.order_processor.get_order_summary(),
+            "trades": self.trade_processor.get_trade_summary()
+        }
+        return summary
+
+    def handle_fund_query(self) -> List[str]:
+        """
+        处理资金查询
+        
+        Returns:
+            资金查询结果列表
+        """
+        return self.fund_processor.handle_fund_query()
+    
+    def handle_position_query(self) -> List[str]:
+        """
+        处理持仓查询
+        
+        Returns:
+            持仓查询结果列表
+        """
+        return self.position_processor.handle_position_query()
+    
+    def handle_order_query(self) -> List[str]:
+        """
+        处理委托查询
+        
+        Returns:
+            委托查询结果列表
+        """
+        return self.order_processor.handle_order_query()
+    
+    # 资金查询相关方法
+    def show_fund_query(self, fund_key: str) -> None:
+        """
+        显示资金查询结果
+        
+        Args:
+            fund_key: 资金账户键值
+        """
+        self.fund_processor.show_fund_query(fund_key)
+    
+    def get_fund_query_data(self) -> Dict[str, Dict[str, pd.DataFrame]]:
+        """
+        获取资金查询数据
+        
+        Returns:
+            资金查询数据字典
+        """
+        return self.fund_processor.get_fund_query_data()
+    
+    # 持仓查询相关方法
+    def get_position_querytime(self, fundkey: str) -> List[str]:
+        """
+        获取持仓查询时间列表
+        
+        Args:
+            fundkey: 资金账户键值
+            
+        Returns:
+            查询时间列表
+        """
+        return self.position_processor.get_position_querytime(fundkey)
+    
+    def show_queryposition(self, account: str, querytime: str) -> None:
+        """
+        显示持仓查询结果
+        
+        Args:
+            account: 账户信息
+            querytime: 查询时间
+        """
+        self.position_processor.show_queryposition(account, querytime)
+    
+    def get_position_query_data(self) -> Dict[str, Dict[str, Dict[str, pd.DataFrame]]]:
+        """
+        获取持仓查询数据
+        
+        Returns:
+            持仓查询数据字典
+        """
+        return self.position_processor.get_position_query_data()
+    
+    # 委托查询相关方法
+    def get_order_querytime(self, fundkey: str) -> List[str]:
+        """
+        获取委托查询时间列表
+        
+        Args:
+            fundkey: 资金账户键值
+            
+        Returns:
+            查询时间列表
+        """
+        return self.order_processor.get_order_querytime(fundkey)
+    
+    def show_queryorder(self, account: str, querytime: str) -> None:
+        """
+        显示委托查询结果
+        
+        Args:
+            account: 账户信息
+            querytime: 查询时间
+        """
+        self.order_processor.show_queryorder(account, querytime)
+    
+    def get_order_query_data(self) -> Dict[str, Dict[str, Dict[str, pd.DataFrame]]]:
+        """
+        获取委托查询数据
+        
+        Returns:
+            委托查询数据字典
+        """
+        return self.order_processor.get_order_query_data()
+    
+    def handle_trade_query(self) -> List[str]:
+        """
+        处理成交查询
+        
+        Returns:
+            成交查询结果列表
+        """
+        return self.trade_processor.handle_trade_query()
+    
+    # 成交查询相关方法
+    def get_trade_querytime(self, fundkey: str) -> List[str]:
+        """
+        获取成交查询时间列表
+        
+        Args:
+            fundkey: 资金账户键值
+            
+        Returns:
+            查询时间列表
+        """
+        return self.trade_processor.get_trade_querytime(fundkey)
+    
+    def show_querytrade(self, account: str, querytime: str, code: str = "") -> None:
+        """
+        显示成交查询结果
+        
+        Args:
+            account: 账户信息
+            querytime: 查询时间
+            code: 股票代码过滤
+        """
+        self.trade_processor.show_querytrade(account, querytime, code)
+    
+    def show_querytrade_summary(self, account: str) -> None:
+        """
+        显示成交查询汇总
+        
+        Args:
+            account: 账户信息
+        """
+        self.trade_processor.show_querytrade_summary(account)
+    
+    def show_querytrade_all(self) -> None:
+        """
+        显示所有成交查询汇总
+        """
+        self.trade_processor.show_querytrade_all()
+    
+    def get_trade_query_data(self) -> Dict[str, Dict[str, Dict[str, pd.DataFrame]]]:
+        """
+        获取成交查询数据
+        
+        Returns:
+            成交查询数据字典
+        """
+        return self.trade_processor.get_trade_query_data()
+
+    # 新股申购相关接口
+    def handle_ipo_query(self) -> List[str]:
+        """
+        处理新股申购额度查询，返回账户列表
+        
+        Returns:
+            账户列表
+        """
+        return self.ipo_processor.handle_ipo_query()
+
+    def show_ipo_query(self, fund: str = "全部", show_summary: bool = False) -> None:
+        """
+        显示新股申购额度查询结果
+        
+        Args:
+            fund: 资金账户（默认全部）
+            show_summary: 是否显示汇总
+        """
+        self.ipo_processor.show_ipo_query(fund, show_summary)
+
+    def handle_ipo_lottery_query(self) -> List[str]:
+        """
+        处理新股中签明细查询，返回账户列表
+        
+        Returns:
+            账户列表
+        """
+        return self.ipo_processor.handle_ipo_lottery_query()
+
+    def show_ipo_lottery_query(self, fund: str = "全部", show_summary: bool = False) -> None:
+        """
+        显示新股中签明细查询结果
+        
+        Args:
+            fund: 资金账户（默认全部）
+            show_summary: 是否显示汇总
+        """
+        self.ipo_processor.show_ipo_lottery_query(fund, show_summary) 
+
+    def get_ipo_query_data(self, fund: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        获取新股申购额度查询数据
+        
+        Args:
+            fund: 资金账户（可选）
+        Returns:
+            新股申购额度数据列表
+        """
+        return self.ipo_processor.get_ipo_query_data(fund)
+
+    def get_ipo_lottery_data(self, fund: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        获取新股中签明细查询数据
+        
+        Args:
+            fund: 资金账户（可选）
+        Returns:
+            新股中签明细数据列表
+        """
+        return self.ipo_processor.get_ipo_lottery_data(fund) 
+
+    # 篮子交易相关接口
+    def handle_basketorder(self) -> List[str]:
+        """
+        处理篮子订单查询
+        
+        Returns:
+            篮子订单查询结果列表
+        """
+        return self.basket_processor.handle_basketorder()
+    def get_basket_query_data(self, source: Optional[str] = None, fund: str = "", stockcode: str = "") -> List[Dict[str, Any]]:
+        """
+        获取篮子订单查询数据
+        
+        Args:
+            source: 订单来源类型
+            fund: 资金账户
+            stockcode: 股票代码
+        Returns:
+            篮子订单数据列表
+        """
+        return self.basket_processor.get_basket_query_data(source, fund, stockcode)
+    def get_basketorder_detail_data(self, instanceid: str) -> List[Dict[str, Any]]:
+        """
+        获取指定母单的篮子订单明细
+        
+        Args:
+            instanceid: 母单ID
+        Returns:
+            篮子订单明细列表
+        """
+        return self.basket_processor.get_basketorder_detail_data(instanceid)
+    def get_singleorder_data(self, fund: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        获取单户订单数据
+        
+        Args:
+            fund: 资金账户（可选）
+        Returns:
+            单户订单数据列表
+        """
+        return self.basket_processor.get_singleorder_data(fund)
+    def get_singleorder_cancel_data(self, fund: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        获取单户撤单数据
+        
+        Args:
+            fund: 资金账户（可选）
+        Returns:
+            单户撤单数据列表
+        """
+        return self.basket_processor.get_singleorder_cancel_data(fund)
+    def get_basketorder_op_data(self, instanceid: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        获取篮子订单操作数据
+        
+        Args:
+            instanceid: 母单ID（可选）
+        Returns:
+            操作数据列表
+        """
+        return self.basket_processor.get_basketorder_op_data(instanceid) 
+
+    def show_basket_summary(self, source: str = "全部", fund: str = "", stockcode: str = "", showorders: bool = False) -> None:
+        """
+        显示篮子订单汇总信息
+        
+        Args:
+            source: 订单来源类型
+            fund: 资金账户
+            stockcode: 股票代码
+            showorders: 是否显示子单明细
+        """
+        self.basket_processor.show_basket_summary(source, fund, stockcode, showorders)
+
+    def show_basket_instance_detail(self, instanceid: str, fund: str = "", stockcode: str = "") -> None:
+        """
+        显示指定母单的参数详情
+        
+        Args:
+            instanceid: 母单ID
+            fund: 资金账户
+            stockcode: 股票代码
+        """
+        self.basket_processor.show_basket_instance_detail(instanceid, fund, stockcode)
+
+    def show_basket_order_detail(self, instanceid: str, fund: str = "", stockcode: str = "") -> None:
+        """
+        显示指定母单的全部子单详情
+        
+        Args:
+            instanceid: 母单ID
+            fund: 资金账户
+            stockcode: 股票代码
+        """
+        self.basket_processor.show_basket_order_detail(instanceid, fund, stockcode)
+
+    def show_basket_query(self, source: str = "全部") -> None:
+        """
+        显示篮子订单查询结果
+        
+        Args:
+            source: 订单来源类型
+        """
+        self.basket_processor.show_basket_query(source)
+
+    def show_basket_initreqs(self, instance: str, isfullreqs: bool = False) -> None:
+        """
+        显示篮子订单原始请求信息
+        
+        Args:
+            instance: 母单ID
+            isfullreqs: 是否显示完整请求
+        """
+        self.basket_processor.show_basket_initreqs(instance, isfullreqs) 
+
+    # 算法交易相关接口
+    def show_queryalgorithm(self, querytime: str) -> None:
+        """
+        显示算法订单查询结果
+        
+        Args:
+            querytime: 查询时间
+        """
+        self.algorithm_processor.show_queryalgorithm(querytime)
+    def get_algorithm_code(self) -> List[str]:
+        """
+        获取算法订单涉及的股票代码列表
+        
+        Returns:
+            股票代码列表
+        """
+        return self.algorithm_processor.get_algorithm_code()
+    def get_algorithm_detail(self, instanceid: str) -> Optional[pd.DataFrame]:
+        """
+        获取指定算法订单的明细
+        
+        Args:
+            instanceid: 算法单ID
+        Returns:
+            算法订单明细DataFrame
+        """
+        return self.algorithm_processor.get_algorithm_detail(instanceid)
+    def get_algorithm_push_detail(self, instanceid: str, push_type: str):
+        """
+        获取算法订单推送明细
+        
+        Args:
+            instanceid: 算法单ID
+            push_type: 推送类型（如order、trade等）
+        Returns:
+            推送明细
+        """
+        return self.algorithm_processor.get_algorithm_push_detail(instanceid, push_type)
+    def get_algorithm_query_data(self) -> List[Dict[str, Any]]:
+        """
+        获取算法订单查询数据
+        
+        Returns:
+            算法订单数据列表
+        """
+        return self.algorithm_processor.get_algorithm_query_data() 
+
+    # 条件交易相关接口
+    def show_condition_summary(self) -> None:
+        """
+        显示条件单汇总信息
+        """
+        self.condition_processor.show_condition_summary()
+    def show_condition_instance_detail(self, order_no: str, fund: str, security: str) -> None:
+        """
+        显示条件单实例明细
+        
+        Args:
+            order_no: 母单编号
+            fund: 资金账户
+            security: 股票代码
+        """
+        self.condition_processor.show_condition_instance_detail(order_no, fund, security)
+    def show_condition_order_detail(self, order_no: str) -> None:
+        """
+        显示条件单母单操作明细
+        
+        Args:
+            order_no: 母单编号
+        """
+        self.condition_processor.show_condition_order_detail(order_no)
+    def show_condition_security_order_detail(self, order_no: str, fund: str, security: str) -> None:
+        """
+        显示条件单证券操作明细
+        
+        Args:
+            order_no: 母单编号
+            fund: 资金账户
+            security: 股票代码
+        """
+        self.condition_processor.show_condition_security_order_detail(order_no, fund, security)
+    def show_condition_initreqs(self, order_no: str, isfullreqs: bool = False) -> None:
+        """
+        显示条件单初始请求
+        
+        Args:
+            order_no: 母单编号
+            isfullreqs: 是否显示完整请求
+        """
+        self.condition_processor.show_condition_initreqs(order_no, isfullreqs)
+    def show_querycondition(self, querytime: str) -> None:
+        """
+        显示条件单查询结果
+        
+        Args:
+            querytime: 查询时间
+        """
+        self.condition_processor.show_querycondition(querytime)
+    def get_condition_summary_data(self) -> Dict[str, Any]:
+        """
+        获取条件单汇总数据
+        
+        Returns:
+            条件单汇总数据字典
+        """
+        return self.condition_processor.get_condition_summary_data()
+    def get_condition_instance_detail_data(self, order_no: str) -> Dict[str, Any]:
+        """
+        获取条件单实例明细数据
+        
+        Args:
+            order_no: 母单编号
+        Returns:
+            条件单实例明细数据字典
+        """
+        return self.condition_processor.get_condition_instance_detail_data(order_no)
+    def get_condition_order_detail_data(self, order_no: str) -> Any:
+        """
+        获取条件单母单操作明细数据
+        
+        Args:
+            order_no: 母单编号
+        Returns:
+            条件单母单操作明细数据
+        """
+        return self.condition_processor.get_condition_order_detail_data(order_no)
+    def get_condition_security_order_detail_data(self, order_no: str, fund: str, security: str) -> Any:
+        """
+        获取条件单证券操作明细数据
+        
+        Args:
+            order_no: 母单编号
+            fund: 资金账户
+            security: 股票代码
+        Returns:
+            条件单证券操作明细数据
+        """
+        return self.condition_processor.get_condition_security_order_detail_data(order_no, fund, security)
+    def get_condition_initreqs_data(self, order_no: str) -> Any:
+        """
+        获取条件单初始请求数据
+        
+        Args:
+            order_no: 母单编号
+        Returns:
+            条件单初始请求数据
+        """
+        return self.condition_processor.get_condition_initreqs_data(order_no)
+    def get_querycondition_data(self, querytime: str) -> Any:
+        """
+        获取条件单查询数据
+        
+        Args:
+            querytime: 查询时间
+        Returns:
+            条件单查询数据
+        """
+        return self.condition_processor.get_querycondition_data(querytime) 
+
+    # 融资融券相关接口
+    def show_finable_security(self, fund_key: str, query_time: str, show_securities: bool = False, stock_code: str = "") -> None:
+        """
+        显示可融资标的券信息（Jupyter友好）
+        
+        Args:
+            fund_key: 资金账户
+            query_time: 查询时间
+            show_securities: 是否显示全部证券代码
+            stock_code: 指定证券代码
+        """
+        self.financing_processor.show_finable_security(fund_key, query_time, show_securities, stock_code)
+    def get_finable_security_data(self, fund_key: Optional[str] = None) -> Dict[str, Any]:
+        """
+        获取可融资标的券数据（Web友好）
+        
+        Args:
+            fund_key: 资金账户（可选）
+        Returns:
+            可融资标的券数据字典
+        """
+        return self.financing_processor.get_finable_security_data(fund_key)
+    def get_finable_security_failed(self) -> List[Dict[str, Any]]:
+        """
+        获取可融资标的券失败查询（Web友好）
+        
+        Returns:
+            失败查询列表
+        """
+        return self.financing_processor.get_finable_security_failed() 
+    def handle_finable_security_query(self) -> List[str]:
+        """
+        汇总可融资标的券的资金账户列表
+        
+        Returns:
+            资金账户fund_key列表
+        """
+        return self.financing_processor.handle_finable_security_query()
+    def get_finable_security_querytime(self, fundkey: str) -> List[str]:
+        """
+        获取指定资金账户的可融资标的券查询时间列表
+        
+        Args:
+            fundkey: 资金账户
+        Returns:
+            查询时间列表
+        """
+        return self.financing_processor.get_finable_security_querytime(fundkey) 

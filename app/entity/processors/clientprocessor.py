@@ -267,6 +267,8 @@ class ClientProcessor:
         self._parse_request_statistics()
         self._parse_account_query()
         self._parse_fund_query()
+        self._parse_position_query()
+        self._parse_order_query()
 
 
     def format_size(self, size):
@@ -700,8 +702,8 @@ class ClientProcessor:
         all_data_dict['failed']['all'] = pd.DataFrame(self.query_asset_failed_list, columns=columns_query_type_dict['failed']) if len(value) else {}
         return all_data_dict
 
-    # 持仓查询
-    def handle_position_query(self):
+    # 解析持仓请求数据
+    def _parse_position_query(self):
         self.query_account_stock_dict = {}
         self.query_rzrq_account_stock_dict = {}
         self.query_ggt_account_stock_dict = {}
@@ -776,7 +778,9 @@ class ClientProcessor:
                 result["req_id"] = key
                 result["type"] = "ggt"
                 self.query_stock_failed_list.append(result)
-        
+
+    # 各类资金账户持仓查询汇总列表
+    def handle_position_query(self):        
         fundlist = []
         for fund, querytimedata in self.query_account_stock_dict.items():
             fundlist.append("%s|%s|%s" % (fund, "normal", len(querytimedata)))
@@ -786,7 +790,7 @@ class ClientProcessor:
             fundlist.append("%s|%s|%s" % (fund, "ggt", len(querytimedata)))
         return fundlist
 
-
+    # 查询持仓请求时间
     def get_position_querytime(self, fundkey):
         fund = fundkey.split("|")[0]
         querytype = fundkey.split("|")[1]
@@ -806,7 +810,7 @@ class ClientProcessor:
         sorted_querytime_list = [item for item in sorted(querytime_list, key=lambda item: datetime.strptime(item.split('|')[0], '%Y%m%d %H:%M:%S.%f'), reverse=True)]
         return sorted_querytime_list
         
-        
+    # 查询账户某时间的各类持仓请求数据
     def show_queryposition(self, account, querytime):
         fund = account.split("|")[0]
         querytype = account.split("|")[1]
@@ -841,10 +845,62 @@ class ClientProcessor:
             df_account_stock = pd.DataFrame(querydata, columns = typecolumn[querytype])
             df_account_stock.rename(columns = typecolumnrename[querytype], inplace=True)
             display(df_account_stock)
-        
+
+    # 获取持仓汇总数据，非jupyter使用
+    def get_position_query_data(self):
+        typecolumn = {
+            "normal":['security_id', 'security_name', 'actual_amt', 'available_purchase_amt', 'available_stock_balance',
+                'cost_price', 'frozen_qty', 'market', 'market_name', 'market_price', 'market_value', 'stock_balance', 'yield'],
+            "rzrq":['SecurityID', 'SecurityName', 'AccountSecPosition', 'AvailableAmt', 'CostPrice', 'FrozenAmt', "Market",
+                'MarketName', 'MarketPrice', 'MarketValue', 'StockBalance', 'Yield'],
+            "ggt":['SecurityID', 'SecurityName', 'AvailableStockBalance', 'ActualAmt', 'StockBalance', 'FrozenQty',
+                'CostPrice', "Market", 'MarketName', 'MarketPrice', 'MarketValue', 'Yield'],
+        }
+        typecolumnrename = {
+            "normal":{"available_purchase_amt":"avail_purch", "available_stock_balance":"avail_amt","security_id":"security", "security_name":"symbol"},
+            "rzrq":{"AccountSecPosition":"ActualAmt"},
+            "ggt":{"SecurityID":"Security", "SecurityName":"Symbol", "AvailableStockBalance":"Available", "Market":"market", "MarketName":"Market"},
+        }
+        all_data_dict = {
+            'normal': {},
+            'rzrq': {},
+            'ggt': {},
+        }
+
+        for fundtoken, time_dict in self.query_account_stock_dict.items():
+            for timestamp, value in time_dict.items():
+                if type(value) is list:
+                    data = pd.DataFrame(value, columns=typecolumn['normal']).dropna(axis=1, how='all').fillna('')
+                    data.rename(columns = typecolumnrename['normal'], inplace=True)
+                    all_data_dict['normal'].setdefault(fundtoken, {})[timestamp] = data if len(value) else []
+                elif type(value) is dict:
+                    all_data_dict['normal'].setdefault(fundtoken, {})[timestamp] = [value]
+                elif value == '':
+                    all_data_dict['normal'].setdefault(fundtoken, {})[timestamp] = []
+        for fundtoken, time_dict in self.query_rzrq_account_stock_dict.items():
+            for timestamp, value in time_dict.items():
+                if type(value) is list:
+                    data = pd.DataFrame(value, columns=typecolumn['rzrq']).dropna(axis=1, how='all').fillna('')
+                    data.rename(columns = typecolumnrename['rzrq'], inplace=True)
+                    all_data_dict['rzrq'].setdefault(fundtoken, {})[timestamp] = data if len(value) else []
+                elif type(value) is dict:
+                    all_data_dict['rzrq'].setdefault(fundtoken, {})[timestamp] = [value]
+                elif value == '':
+                    all_data_dict['rzrq'].setdefault(fundtoken, {})[timestamp] = []
+        for fundtoken, time_dict in self.query_ggt_account_stock_dict.items():
+            for timestamp, value in time_dict.items():
+                if type(value) is list:
+                    data = pd.DataFrame(value, columns=typecolumn['ggt']).dropna(axis=1, how='all').fillna('')
+                    data.rename(columns = typecolumnrename['ggt'], inplace=True)
+                    all_data_dict['ggt'].setdefault(fundtoken, {})[timestamp] = data if len(value) else []
+                elif type(value) is dict:
+                    all_data_dict['ggt'].setdefault(fundtoken, {})[timestamp] = [value]
+                elif value == '':
+                    all_data_dict['ggt'].setdefault(fundtoken, {})[timestamp] = []
+        return all_data_dict
     
-    # 委托查询
-    def handle_order_query(self):
+    # 解析委托查询数据
+    def _parse_order_query(self):
         self.query_order_dict = {}
         self.query_rzrq_order_dict = {}
         self.query_ggt_order_dict = {}
@@ -954,6 +1010,8 @@ class ClientProcessor:
                 result["type"] = "ggt"
                 self.query_order_failed_list.append(result)
 
+    # 委托查询
+    def handle_order_query(self):
         fundlist = []
         for fund, querytimedata in self.query_order_dict.items():
             fundlist.append("%s|%s|%s" % (fund, "normal", len(querytimedata)))
@@ -962,8 +1020,8 @@ class ClientProcessor:
         for fund, querytimedata in self.query_ggt_order_dict.items():
             fundlist.append("%s|%s|%s" % (fund, "ggt", len(querytimedata)))
         return fundlist
-        
-    
+
+    # 获取某资金账户委托查询时间
     def get_order_querytime(self, fundkey):
         fund = fundkey.split("|")[0]
         querytype = fundkey.split("|")[1]
@@ -983,7 +1041,7 @@ class ClientProcessor:
         sorted_querytime_list = [item for item in sorted(querytime_list, key=lambda item: datetime.strptime(item.split('|')[0], '%Y%m%d %H:%M:%S.%f'), reverse=True)]
         return sorted_querytime_list
     
-    
+    # 查询某资金账户某时间委托请求数据
     def show_queryorder(self, account, querytime):
         fund = account.split("|")[0]
         querytype = account.split("|")[1]
@@ -1022,8 +1080,64 @@ class ClientProcessor:
             df_queryorder.rename(columns = typecolumnrename[querytype], inplace=True)
             df_queryorder = df_queryorder.dropna(axis=1, how='all')
             display(df_queryorder)
-    
-    
+
+    # 查询委托数据，非jupyter使用
+    def get_order_query_data(self):
+        typecolumn = {
+            "normal":['insert_time', 'symbol', 'symbol_name', 'market_name', 'operation_msg', 'price','AvgPx','quantity', 'trade_amount', 
+                'avg_price', 'order_no', 'order_status_msg', 'order_type_msg', 'currency', 'message',
+                'OrderEntryTime', 'MarketName', 'Symbol', 'SecurityID', 'Price', 'OrderQty', 'Side', 'AvgPx', 'TradeVolume', 
+                'OrderID', 'OperationMsg', 'Distribution', 'OrderStatusMsg', 'OrdType', 'OrderStatus2946'],
+            "rzrq":['OrderEntryTime', 'MarketName', 'Symbol', 'SecurityID', 'Price', 'OrderQty', 'Side', 'AvgPx', 'TradeVolume', 
+                'OrderID', 'OperationMsg', 'Distribution', 'OrderStatusMsg', 'OrdType', 'OrderStatus2946'],
+            "ggt":['OrderTime', 'Market', 'MarketName', 'SecurityID', 'SecurityName', 'OrderPrice', 'OrderQty', 'Side', 'AvgPx',
+                'TradeVolume', 'OrderID', 'OperationMsg', 'OrderStatusMsg'],
+        }
+        typecolumnrename = {
+            "normal":{"symbol":"security", "symbol_name":"symbol", "trade_amount":"trade","order_status_msg":"status",
+                "order_type_msg":"type", "avg_price":"avg","operation_msg":"op","market_name":"market"},
+            "rzrq":{},
+            "ggt":{"SecurityID":"Security", "SecurityName":"Symbol", "OrderPrice":"Price", "TradeVolume":"Volume"},
+        }
+        all_data_dict = {
+            'normal': {},
+            'rzrq': {},
+            'ggt': {},
+        }
+
+        for fundtoken, time_dict in self.query_order_dict.items():
+            for timestamp, value in time_dict.items():
+                if type(value) is list:
+                    data = pd.DataFrame(value, columns=typecolumn['normal']).dropna(axis=1, how='all').fillna('')
+                    data.rename(columns = typecolumnrename['normal'], inplace=True)
+                    all_data_dict['normal'].setdefault(fundtoken, {})[timestamp] = data if len(value) else []
+                elif type(value) is dict:
+                    all_data_dict['normal'].setdefault(fundtoken, {})[timestamp] = [value]
+                elif value == '':
+                    all_data_dict['normal'].setdefault(fundtoken, {})[timestamp] = []
+        for fundtoken, time_dict in self.query_rzrq_order_dict.items():
+            for timestamp, value in time_dict.items():
+                if type(value) is list:
+                    data = pd.DataFrame(value, columns=typecolumn['rzrq']).dropna(axis=1, how='all').fillna('')
+                    data.rename(columns = typecolumnrename['rzrq'], inplace=True)
+                    all_data_dict['rzrq'].setdefault(fundtoken, {})[timestamp] = data if len(value) else []
+                elif type(value) is dict:
+                    all_data_dict['rzrq'].setdefault(fundtoken, {})[timestamp] = [value]
+                elif value == '':
+                    all_data_dict['rzrq'].setdefault(fundtoken, {})[timestamp] = []
+        for fundtoken, time_dict in self.query_ggt_order_dict.items():
+            for timestamp, value in time_dict.items():
+                if type(value) is list:
+                    data = pd.DataFrame(value, columns=typecolumn['ggt']).dropna(axis=1, how='all').fillna('')
+                    data.rename(columns = typecolumnrename['ggt'], inplace=True)
+                    all_data_dict['ggt'].setdefault(fundtoken, {})[timestamp] = data if len(value) else []
+                elif type(value) is dict:
+                    all_data_dict['ggt'].setdefault(fundtoken, {})[timestamp] = [value]
+                elif value == '':
+                    all_data_dict['ggt'].setdefault(fundtoken, {})[timestamp] = []
+        return all_data_dict
+
+    # 查询单账户委托汇总数据
     def show_queryorder_summary(self, account):
         fund = account.split("|")[0]
         querytype = account.split("|")[1]
@@ -1037,7 +1151,7 @@ class ClientProcessor:
         for query_time, querydata in typequerydict[querytype][fund].items():
             print(query_time, len(querydata))
     
-    
+    # 查询全部账户委托汇总数据
     def show_queryorder_all(self):
         # 按时间戳统计查询条数
         print("\n根据时间统计查询行数\n")
@@ -1070,7 +1184,6 @@ class ClientProcessor:
         cols = cols[-1:] + cols[:-1]  # 将 'total' 列移到最前面
         df = df[cols]
         display(df)
-    
     
     # 成交查询
     def handle_trade_query(self):

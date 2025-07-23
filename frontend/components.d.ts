@@ -9,6 +9,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AccountsPanel: typeof import('./src/components/clientLogFilter/accountsPanel.vue')['default']
+    copy: typeof import('./src/components/clientLogFilter/positionPanel copy.vue')['default']
     CopyLink: typeof import('./src/components/common/copyLink.vue')['default']
     CopyText: typeof import('./src/components/common/copyText.vue')['default']
     DataPanel: typeof import('./src/components/common/dataPanel.vue')['default']
@@ -32,6 +33,8 @@ declare module 'vue' {
     IconTooling: typeof import('./src/components/icons/IconTooling.vue')['default']
     LogStatusPanel: typeof import('./src/components/home/logStatusPanel/index.vue')['default']
     ModuleList: typeof import('./src/components/home/moduleList/index.vue')['default']
+    OrderPanel: typeof import('./src/components/clientLogFilter/orderPanel.vue')['default']
+    PositionPanel: typeof import('./src/components/clientLogFilter/positionPanel.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     StatisticPanel: typeof import('./src/components/clientLogFilter/statisticPanel.vue')['default']

@@ -16,8 +16,14 @@ const api = {
   getFetchStatistic: (): Promise<RespType<any[]>> => {
     return apiClient.get('/log/client/query_fetch_statistics');
   },
-  getFundQuery: (): Promise<RespType<any[]>> => {
+  getFundQuery: (): Promise<RespType<any>> => {
     return apiClient.get('/log/client/query_fund_logs');
+  },
+  getPositionQuery: (): Promise<RespType<any>> => {
+    return apiClient.get('/log/client/query_position_logs');
+  },
+  getOrderQuery: (): Promise<RespType<any>> => {
+    return apiClient.get('/log/client/query_order_logs');
   },
 };
 

@@ -7,14 +7,14 @@ import { useClientLogStore } from '@/store/clientLog'
 import { storeToRefs } from 'pinia';
 
 const clientLogStore = useClientLogStore();
-const { fundFetchMap } = storeToRefs(clientLogStore)
-const { getFundLogs } = useClientLogAnalyser();
+const { positionFetchMap } = storeToRefs(clientLogStore)
+const { getPositionLogs } = useClientLogAnalyser();
 
 const isLoadingData = ref(false);
-const refreshFundLogs = async () => {
-  currentAccount.value = '';
+const refreshData = async () => {
+  reset();
   isLoadingData.value = true;
-  await getFundLogs();
+  await getPositionLogs();
   isLoadingData.value = false;
 };
 
@@ -22,33 +22,47 @@ const tabs = [
   { label: '普通', value: 'normal' },
   { label: '信用', value: 'rzrq' },
   { label: '港股通', value: 'ggt' },
-  { label: '异常', value: 'failed' },
 ]
 const tab = ref('normal');
 
 const currentTabMap =  computed(() => {
-  return fundFetchMap.value?.[tab.value] || {}
+  return positionFetchMap.value?.[tab.value] || {}
 })
 const accountList = computed(() => Object.keys(currentTabMap.value));
 const currentAccount = ref('');
+const currentTimeMap = computed(() => {
+  return currentTabMap.value?.[currentAccount.value] || {};
+})
+
+const timeList = computed(() => Object.keys(currentTimeMap.value));
+const currentTime = ref('');
 const currentTableData = computed(() => {
-  if (!currentAccount.value) {
+  if (!currentTime.value) {
     return []
   }
-  return currentTabMap.value[currentAccount.value]
+  return currentTimeMap.value[currentTime.value]
 })
+
+const reset = () => {
+  currentAccount.value = '';
+  currentTime.value = '';
+}
 </script>
 
 <template>
-  <dataPanel title="资金请求统计">
+  <dataPanel title="持仓请求统计">
     <template #actions>
-        <el-radio-group v-model="tab" size="small">
+        <el-radio-group v-model="tab" size="small" @change="reset">
           <el-radio-button v-for="item in tabs" :key="item.value" :value="item.value">{{ item.label }}</el-radio-button>
         </el-radio-group>
-        <el-select v-model="currentAccount" size="small" style="width: 200px;" placeholder="请选择账户"> 
+        <el-select v-model="currentAccount" size="small" style="width: 200px;" placeholder="请选择账户" @change="currentTime = ''"> 
           <el-option v-for="item in accountList" :key="item" :label="item" :value="item"></el-option>
         </el-select>
-        <el-button @click="refreshFundLogs" :loading="isLoadingData" size='small' type="primary">刷新</el-button>
+        <el-select v-model="currentTime" size="small" style="width: 200px;" placeholder="请选择请求时间"> 
+          <el-option v-for="item in timeList" :key="item" :label="item" :value="item"></el-option>
+        </el-select>
+        <el-button @click="refreshData" :loading="isLoadingData" size='small' type="primary">刷新</el-button>
+        <el-button size="small">账户持仓变化趋势图（待开发）</el-button>
     </template>
     <template #data>
       <common-table :data="currentTableData"></common-table>

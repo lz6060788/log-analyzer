@@ -42,14 +42,11 @@ def upload_file():
         # print(file_content)
         clientreq = ClientProcessor([file_content])
         clientreq.parse()
-        clientreq.handle_account_query()
         clientreq.handle_basket_order_push()
         clientreq.handle_algorithm_push()
-        clientreq.show_request_statics()
         session['clientPropcessor'] = clientreq
         print("解析完成", "解析失败日志行数:", len(clientreq.illegal_reqs))
         print("跳过不处理的日志行数:", len(clientreq.skipped_reqs))
-        print(clientreq.query_accounts_df)
         return None
     except UnicodeDecodeError as e:
         return None, -1, '文件解析失败'
@@ -80,3 +77,22 @@ def query_funds_data():
         return clientreq.get_fund_query_data()
     else:
         return None, -1, '请先上传文件'
+
+@client_bp.route('/query_position_logs', methods=['GET'])
+@standard_json_response
+def query_position_data():
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_position_query_data()
+    else:
+        return None, -1, '请先上传文件'
+    
+@client_bp.route('/query_order_logs', methods=['GET'])
+@standard_json_response
+def query_order_data():
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_order_query_data()
+    else:
+        return None, -1, '请先上传文件'
+
