@@ -358,18 +358,25 @@ class BaseProcessor:
         # 这里需要存储到条件推送模块中
         return ""
     
-    def parse(self, file_list: List[str]) -> None:
+    def parse(self, file_list: List[str], mode: str = "jupyter") -> None:
         """
         解析日志文件列表
         
         Args:
             file_list: 文件内容列表
+            mode: 模式，jupyter或web
         """
         self.req_pairs = {}
         
-        for file_content in file_list:
-            for line in file_content.split("\n"):
-                self.parse_line(line)
+        if mode == "jupyter":
+            for file in file_list:
+                with open(file, "r", encoding="gb2312", errors="ignore") as f:
+                    for line in f:
+                        self.parse_line(line)
+        elif mode == "web":
+            for file_content in file_list:
+                for line in file_content.split("\n"):
+                    self.parse_line(line)
         
         # 清理空请求
         self._clean_empty_requests()
