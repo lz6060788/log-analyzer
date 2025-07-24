@@ -1,6 +1,6 @@
 import json
 from flask import Blueprint, request, jsonify, session
-from entity.processors.clientprocessor import ClientProcessor
+from entity.processors.client.clientprocessor import ClientProcessor
 from utils.request import standard_json_response
 
 """

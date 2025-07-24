@@ -121,40 +121,7 @@ class BaseProcessor:
         
         # 处理有请求ID的日志行
         if req_id != "":
-            if req_id not in self.req_pairs.keys():
-                self.req_pairs[req_id] = {"request":"", "response":"", "req_time":"", "rsp_time":"", "protocol":""}
-            try:
-                # 兼容一下返回 xxx&recv= 的情况
-                split_line = line.split(self.config.split_map[req_type])
-                req_split = split_line[1] if (len(split_line) > 1 and len(split_line[1]) > 2) else '{}'
-                req_split = req_split.replace("******", "}]}}}},")
-                req_split = req_split.replace("\r\n", "")
-                req_json = json.loads(req_split)
-
-                self.req_pairs[req_id][req_type] = req_json
-                self.req_pairs[req_id][self.req_time_map[req_type]] = req_time
-                
-                # 根据请求类型，设置请求 protocol
-                if req_type == "request":
-                    if "servicename" in line:
-                        self.req_pairs[req_id]["protocol"] = "pb"
-                    elif "FunID" in line:
-                        self.req_pairs[req_id]["protocol"] = "json_funid"
-                    elif "action" in line:
-                        self.req_pairs[req_id]["protocol"] = "json"
-                # 如果用户姓名为空，那么每个请求找一下
-                if self.state.username == "":
-                    if "useraccount" in req_split:
-                        username_list =  self._find_key_in_dict(req_json, "useraccount")
-                        self.state.username = username_list
-            
-            except Exception as e:
-                self.state.illegal_reqs.append({
-                    "line":line,
-                    "e":e,
-                    "traceback_exc":traceback.format_exc(),
-                })
-                return ""
+            self._process_request_response(line, req_id, req_type, req_time)
         # 查询账户，没有req_id，特殊处理
         else:
             self._process_special_lines(line, req_type, req_time)
