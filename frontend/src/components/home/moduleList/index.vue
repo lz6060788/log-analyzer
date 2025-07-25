@@ -53,9 +53,10 @@ const modules = ref<ModuleItem[]>([
     path: '/clientLogFilter',
   },
   {
-    title: '功能 2',
-    description: '这是第二个功能的描述',
-    color: 'green-teal'
+    title: '日志解析美化工具',
+    description: '简单解析日志内容，格式化显示json内容，表格形式展示日志片段内容',
+    color: 'green-teal',
+    path: '/log-paste',
   },
   {
     title: '功能 3',
