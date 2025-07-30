@@ -3,6 +3,7 @@ from functools import wraps
 import pandas as pd
 import numpy as np
 import json
+import traceback
 
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -50,9 +51,14 @@ def standard_json_response(func):
                 'message': message
             })
         except Exception as e:
+            # 输出详细的错误堆栈信息
+            print(f"接口 {func.__name__} 发生错误: {e}")
+            print("错误堆栈:")
+            print(traceback.format_exc())
+            
             return jsonify({
                 'code': -1,
                 'data': None,
-                'message': str(e)
+                'message': f'服务器内部错误: {str(e)}'
             })
     return wrapper

@@ -21,11 +21,24 @@ export default defineComponent({
     const page = ref(1);
     const pageSize = ref(10);
     const total = computed(() => props.data.length);
+    
+    // 计算所有列：遍历所有行收集所有可能的key
+    const columns = computed(() => {
+      if (props.data.length === 0) return [];
+      
+      const allKeys = new Set<string>();
+      props.data.forEach(row => {
+        if (row && typeof row === 'object') {
+          Object.keys(row).forEach(key => {
+            allKeys.add(key);
+          });
+        }
+      });
+      
+      return Array.from(allKeys);
+    });
+    
     return () => {
-      const columns = props.data.length > 0 
-        ? Object.keys(props.data[0]) 
-        : [];
-
       const slots = useSlots();
 
       return [
@@ -37,7 +50,7 @@ export default defineComponent({
           stripe: true,
           size: 'small'
         }, () => [
-          ...columns.map((key) => {
+          ...columns.value.map((key) => {
             return h(ElTableColumn, {
               key,
               prop: key,

@@ -268,7 +268,8 @@ class ProcessingConfig:
 class ProcessingState:
     """处理状态类"""
     
-    def __init__(self):
+    def __init__(self, isJupyter: bool = True):
+        self.isJupyter = isJupyter
         # 基础统计
         self.counts = 0
         self.counts_pb = 0
@@ -298,3 +299,10 @@ class ProcessingState:
         self.fund_dict = {}
         self.client_fundtoken_mapping = {}
         self.client_permissioncode_mapping = {} 
+
+        # 推送
+        self.basketorder_push_cnts = 0
+        self.algorithm_push_raw = []
+        self.gradecondition_push_instruction = []
+        self.gradecondition_push_condition = []
+        self.gradecondition_push_order = []

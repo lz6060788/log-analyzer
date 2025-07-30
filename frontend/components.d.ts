@@ -9,7 +9,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AccountsPanel: typeof import('./src/components/clientLogFilter/accountsPanel.vue')['default']
-    copy: typeof import('./src/components/clientLogFilter/positionPanel copy.vue')['default']
+    copy: typeof import('./src/components/clientLogFilter/tradePanel copy.vue')['default']
     CopyLink: typeof import('./src/components/common/copyLink.vue')['default']
     CopyText: typeof import('./src/components/common/copyText.vue')['default']
     DataPanel: typeof import('./src/components/common/dataPanel.vue')['default']
@@ -34,6 +34,7 @@ declare module 'vue' {
     IconEcosystem: typeof import('./src/components/icons/IconEcosystem.vue')['default']
     IconSupport: typeof import('./src/components/icons/IconSupport.vue')['default']
     IconTooling: typeof import('./src/components/icons/IconTooling.vue')['default']
+    IpoPanel: typeof import('./src/components/clientLogFilter/ipoPanel.vue')['default']
     JsonViewerDialog: typeof import('./src/components/common/JsonViewerDialog.vue')['default']
     LogStatusPanel: typeof import('./src/components/home/logStatusPanel/index.vue')['default']
     ModuleList: typeof import('./src/components/home/moduleList/index.vue')['default']
@@ -44,6 +45,7 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     StatisticPanel: typeof import('./src/components/clientLogFilter/statisticPanel.vue')['default']
     TheWelcome: typeof import('./src/components/TheWelcome.vue')['default']
+    TradePanel: typeof import('./src/components/clientLogFilter/tradePanel.vue')['default']
     WelcomeItem: typeof import('./src/components/WelcomeItem.vue')['default']
   }
 }

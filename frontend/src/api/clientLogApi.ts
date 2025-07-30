@@ -25,6 +25,21 @@ const api = {
   getOrderQuery: (): Promise<RespType<any>> => {
     return apiClient.get('/log/client/query_order_logs');
   },
+  getOrderSummary: (): Promise<RespType<any>> => {
+    return apiClient.get(`/log/client/query_order_summary`);
+  },
+  getTradeQuery: (): Promise<RespType<any>> => {
+    return apiClient.get(`/log/client/trade_query_data`);
+  },
+  getTradeSummary: (): Promise<RespType<any>> => {
+    return apiClient.get(`/log/client/query_trade_summary`);
+  },
+  getIpoQuery: (): Promise<RespType<any>> => {
+    return apiClient.get(`/log/client/ipo_query_data`);
+  },
+  getIpoLotteryQuery: (): Promise<RespType<any>> => {
+    return apiClient.get(`/log/client/ipo_lottery_data`);
+  },
 };
 
 export default api;

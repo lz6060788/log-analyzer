@@ -1,7 +1,8 @@
 import json
 from flask import Blueprint, request, jsonify, session
-from entity.processors.client.clientprocessor import ClientProcessor
+from entity.processors.client.client_processor_new import ClientProcessorNew
 from utils.request import standard_json_response
+import traceback
 
 """
   客户端全量日志处理路由
@@ -39,17 +40,41 @@ def upload_file():
     try:
         # 尝试以文本形式读取
         file_content = file.read().decode('gb2312', errors='ignore')  # 忽略无法解码的字符
-        # print(file_content)
-        clientreq = ClientProcessor([file_content])
-        clientreq.parse()
-        clientreq.handle_basket_order_push()
-        clientreq.handle_algorithm_push()
+        print('开始解析')
+        
+        # 添加详细的错误处理
+        try:
+            clientreq = ClientProcessorNew([file_content], isJupyter=False)
+            print('ClientProcessorNew 实例化成功')
+        except Exception as e:
+            print(f"ClientProcessorNew 实例化失败")
+            print("错误堆栈:")
+            print(traceback.format_exc())
+            return None, -1, f'处理器初始化失败: {str(e)}'
+        
+        try:
+            clientreq.parse()
+            print('解析完成')
+        except Exception as e:
+            print(f"解析过程失败")
+            print("错误堆栈:")
+            print(traceback.format_exc())
+            return None, -1, f'文件解析失败: {str(e)}'
+        
         session['clientPropcessor'] = clientreq
-        print("解析完成", "解析失败日志行数:", len(clientreq.illegal_reqs))
-        print("跳过不处理的日志行数:", len(clientreq.skipped_reqs))
+        print("解析完成", "解析失败日志行数:", len(clientreq.state.illegal_reqs))
+        print("跳过不处理的日志行数:", len(clientreq.state.skipped_reqs))
         return None
     except UnicodeDecodeError as e:
+        print(f"文件解码失败")
+        print("错误堆栈:")
+        print(traceback.format_exc())
         return None, -1, '文件解析失败'
+    except Exception as e:
+        print(f"未知错误")
+        print("错误堆栈:")
+        print(traceback.format_exc())
+        return None, -1, f'处理失败: {str(e)}'
 
 @client_bp.route('/query_fetch_statistics', methods=['GET'])
 @standard_json_response
@@ -65,7 +90,7 @@ def query_fetch_statistics():
 def query_accounts_logs():
     clientreq = session.get('clientPropcessor')
     if clientreq:
-        return clientreq.query_accounts_df
+        return clientreq.account_processor.query_accounts_df
     else:
         return None, -1, '请先上传文件'
     
@@ -93,6 +118,282 @@ def query_order_data():
     clientreq = session.get('clientPropcessor')
     if clientreq:
         return clientreq.get_order_query_data()
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/query_order_summary', methods=['GET'])
+@standard_json_response
+def query_order_summary():
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_order_summary()
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/trade_query_data', methods=['GET'])
+@standard_json_response
+def get_trade_query_data():
+    """获取成交查询数据"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_trade_query_data()
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/query_trade_summary', methods=['GET'])
+@standard_json_response
+def query_trade_summary():
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_trade_summary()
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/position_querytime/<fundkey>', methods=['GET'])
+@standard_json_response
+def get_position_querytime(fundkey):
+    """获取持仓查询时间列表"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_position_querytime(fundkey)
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/order_querytime/<fundkey>', methods=['GET'])
+@standard_json_response
+def get_order_querytime(fundkey):
+    """获取委托查询时间列表"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_order_querytime(fundkey)
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/trade_querytime/<fundkey>', methods=['GET'])
+@standard_json_response
+def get_trade_querytime(fundkey):
+    """获取成交查询时间列表"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_trade_querytime(fundkey)
+    else:
+        return None, -1, '请先上传文件'
+
+# 新股申购相关路由
+@client_bp.route('/ipo_query_data', methods=['GET'])
+@standard_json_response
+def get_ipo_query_data():
+    """获取新股申购额度查询数据"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        fund = request.args.get('fund')
+        return clientreq.get_ipo_query_data(fund if fund else None)
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/ipo_lottery_data', methods=['GET'])
+@standard_json_response
+def get_ipo_lottery_data():
+    """获取新股中签明细查询数据"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        fund = request.args.get('fund')
+        return clientreq.get_ipo_lottery_data(fund if fund else None)
+    else:
+        return None, -1, '请先上传文件'
+
+# 篮子交易相关路由
+@client_bp.route('/basket_query_data', methods=['GET'])
+@standard_json_response
+def get_basket_query_data():
+    """获取篮子订单查询数据"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        source = request.args.get('source')
+        fund = request.args.get('fund', '')
+        stockcode = request.args.get('stockcode', '')
+        return clientreq.get_basket_query_data(source, fund, stockcode)
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/basketorder_detail_data/<instanceid>', methods=['GET'])
+@standard_json_response
+def get_basketorder_detail_data(instanceid):
+    """获取指定母单的篮子订单明细"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_basketorder_detail_data(instanceid)
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/singleorder_data', methods=['GET'])
+@standard_json_response
+def get_singleorder_data():
+    """获取单户订单数据"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        fund = request.args.get('fund')
+        return clientreq.get_singleorder_data(fund if fund else None)
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/singleorder_cancel_data', methods=['GET'])
+@standard_json_response
+def get_singleorder_cancel_data():
+    """获取单户撤单数据"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        fund = request.args.get('fund')
+        return clientreq.get_singleorder_cancel_data(fund if fund else None)
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/basketorder_op_data', methods=['GET'])
+@standard_json_response
+def get_basketorder_op_data():
+    """获取篮子订单操作数据"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        instanceid = request.args.get('instanceid')
+        return clientreq.get_basketorder_op_data(instanceid if instanceid else None)
+    else:
+        return None, -1, '请先上传文件'
+
+# 算法交易相关路由
+@client_bp.route('/algorithm_code', methods=['GET'])
+@standard_json_response
+def get_algorithm_code():
+    """获取算法订单涉及的股票代码列表"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_algorithm_code()
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/algorithm_detail/<instanceid>', methods=['GET'])
+@standard_json_response
+def get_algorithm_detail(instanceid):
+    """获取指定算法订单的明细"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        result = clientreq.get_algorithm_detail(instanceid)
+        return result.to_dict('records') if result is not None else None
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/algorithm_push_detail/<instanceid>', methods=['GET'])
+@standard_json_response
+def get_algorithm_push_detail(instanceid):
+    """获取算法订单推送明细"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        push_type = request.args.get('push_type', '')
+        return clientreq.get_algorithm_push_detail(instanceid, push_type)
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/algorithm_query_data', methods=['GET'])
+@standard_json_response
+def get_algorithm_query_data():
+    """获取算法订单查询数据"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_algorithm_query_data()
+    else:
+        return None, -1, '请先上传文件'
+
+# 条件交易相关路由
+@client_bp.route('/condition_summary_data', methods=['GET'])
+@standard_json_response
+def get_condition_summary_data():
+    """获取条件单汇总数据"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_condition_summary_data()
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/condition_instance_detail_data/<order_no>', methods=['GET'])
+@standard_json_response
+def get_condition_instance_detail_data(order_no):
+    """获取条件单实例明细数据"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_condition_instance_detail_data(order_no)
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/condition_order_detail_data/<order_no>', methods=['GET'])
+@standard_json_response
+def get_condition_order_detail_data(order_no):
+    """获取条件单母单操作明细数据"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_condition_order_detail_data(order_no)
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/condition_security_order_detail_data/<order_no>', methods=['GET'])
+@standard_json_response
+def get_condition_security_order_detail_data(order_no):
+    """获取条件单证券操作明细数据"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        fund = request.args.get('fund', '')
+        security = request.args.get('security', '')
+        return clientreq.get_condition_security_order_detail_data(order_no, fund, security)
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/condition_initreqs_data/<order_no>', methods=['GET'])
+@standard_json_response
+def get_condition_initreqs_data(order_no):
+    """获取条件单初始请求数据"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_condition_initreqs_data(order_no)
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/querycondition_data/<querytime>', methods=['GET'])
+@standard_json_response
+def get_querycondition_data(querytime):
+    """获取条件单查询数据"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_querycondition_data(querytime)
+    else:
+        return None, -1, '请先上传文件'
+
+# 融资融券相关路由
+@client_bp.route('/finable_security_data', methods=['GET'])
+@standard_json_response
+def get_finable_security_data():
+    """获取可融资标的券数据"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        fund_key = request.args.get('fund_key')
+        return clientreq.get_finable_security_data(fund_key if fund_key else None)
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/finable_security_failed', methods=['GET'])
+@standard_json_response
+def get_finable_security_failed():
+    """获取可融资标的券失败查询"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_finable_security_failed()
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/finable_security_querytime/<fundkey>', methods=['GET'])
+@standard_json_response
+def get_finable_security_querytime(fundkey):
+    """获取指定资金账户的可融资标的券查询时间列表"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_finable_security_querytime(fundkey)
     else:
         return None, -1, '请先上传文件'
 

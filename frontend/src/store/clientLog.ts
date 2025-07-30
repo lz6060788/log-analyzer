@@ -27,6 +27,31 @@ export const useClientLogStore = defineStore('clientLog', () => {
     orderFetchMap.value = data
   }
 
+  const orderSummary = ref<any>({});
+  const setOrderSummary = (data: any) => {
+    orderSummary.value = data
+  }
+
+  const tradeFetchMap = ref<any>({});
+  const setTradeFetchMap = (data: any) => {
+    tradeFetchMap.value = data
+  }
+
+  const tradeSummary = ref<any>({});
+  const setTradeSummary = (data: any) => {
+    tradeSummary.value = data
+  }
+
+  const ipoFetchMap = ref<any>({});
+  const setIpoFetchMap = (data: any) => {
+    ipoFetchMap.value = data
+  }
+
+  const ipoLotteryFetchMap = ref<any>({});
+  const setIpoLotteryFetchMap = (data: any) => {
+    ipoLotteryFetchMap.value = data
+  }
+
   return {
     fetchStatisticList,
     setFetchStatisticList,
@@ -38,5 +63,15 @@ export const useClientLogStore = defineStore('clientLog', () => {
     setPositionFetchMap,
     orderFetchMap,
     setOrderFetchMap,
+    orderSummary,
+    setOrderSummary,
+    tradeFetchMap,
+    setTradeFetchMap,
+    tradeSummary,
+    setTradeSummary,
+    ipoFetchMap,
+    setIpoFetchMap,
+    ipoLotteryFetchMap,
+    setIpoLotteryFetchMap,
   }
 })

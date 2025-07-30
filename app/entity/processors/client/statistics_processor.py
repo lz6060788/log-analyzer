@@ -7,14 +7,15 @@ import json
 from typing import Dict, List, Any
 import pandas as pd
 
-from .models import StatisticsResult, ProcessingState
+from .models import StatisticsResult, ProcessingState, RequestPairsDict
 
 
 class StatisticsProcessor:
     """统计处理器类"""
     
-    def __init__(self, state: ProcessingState):
+    def __init__(self, state: ProcessingState, req_pairs: RequestPairsDict):
         self.state = state
+        self.req_pairs = req_pairs
     
     def parse_request_statistics(self) -> None:
         """
@@ -23,7 +24,7 @@ class StatisticsProcessor:
         self.state.request_statics = {"pb": {}, "json": {}, "json_funid": {}}
         request_statics = self.state.request_statics
         
-        for key, item in self.state.req_pairs.items():
+        for key, item in self.req_pairs.items():
             self.state.counts += 1
             request = item["request"]
             req_time = item["req_time"]

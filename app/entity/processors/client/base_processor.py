@@ -18,9 +18,9 @@ from .models import (
 class BaseProcessor:
     """基础处理器类"""
     
-    def __init__(self):
+    def __init__(self, isJupyter: bool = True):
         self.config = ProcessingConfig()
-        self.state = ProcessingState()
+        self.state = ProcessingState(isJupyter)
         self.req_pairs: RequestPairsDict = {}
         
     def format_size(self, size: float) -> str:
@@ -234,7 +234,7 @@ class BaseProcessor:
             self.state.basketorder_push_raw.append([req_time, request_str])
             self.state.basketorder_push_cnts += 1
         # 算法交易推送
-        elif self._is_altorithm_push(line, self.possible_algorithm_pushkey):
+        elif self._is_altorithm_push(line, self.config.possible_algorithm_pushkey):
             request_str = line.split(self.config.split_map["response"])[1]
             self.state.algorithm_push_raw.append([req_time, request_str])
         # 组合条件推送
@@ -325,7 +325,7 @@ class BaseProcessor:
         # 这里需要存储到条件推送模块中
         return ""
     
-    def parse(self, file_list: List[str], mode: str = "jupyter") -> None:
+    def parse(self, file_list: List[str]) -> None:
         """
         解析日志文件列表
         
@@ -335,12 +335,12 @@ class BaseProcessor:
         """
         self.req_pairs = {}
         
-        if mode == "jupyter":
+        if self.state.isJupyter:
             for file in file_list:
                 with open(file, "r", encoding="gb2312", errors="ignore") as f:
                     for line in f:
                         self.parse_line(line)
-        elif mode == "web":
+        else:
             for file_content in file_list:
                 for line in file_content.split("\n"):
                     self.parse_line(line)
@@ -422,3 +422,58 @@ class BaseProcessor:
         if isfullreqs:
             print(json.dumps(response))
         print("-"*100) 
+
+    def _is_altorithm_push(self, line: str, d: List[str]) -> bool:
+        """
+        判断是否为算法推送
+        
+        Args:
+            line: 日志行
+            d: 算法推送关键词列表
+            
+        Returns:
+            是否为算法推送
+        """
+        for key in d:
+            if key in line:
+                return True
+        return False
+
+    def _handle_query_result(self, protocol: str, servicename: str, cmd: str, resultkey: str) -> Dict[str, Any]:
+        """
+        处理查询结果
+        
+        Args:
+            protocol: 协议类型
+            servicename: 服务名称
+            cmd: 命令
+            resultkey: 结果键
+            
+        Returns:
+            查询结果
+        """
+        req_list = self.get_request_list(protocol, servicename, cmd)
+        rsp_query_data = {}
+        for key in req_list:
+            reqs = self.req_pairs[key]
+            request = reqs["request"]
+            response = reqs["response"]
+            rsp_time = reqs["rsp_time"]
+            raw_querydata = []
+            querydata = response["result"][resultkey]
+            for item in querydata:
+                raw_item = {}
+                fund_token = item["fund_token"]
+                raw_item["rsp_time"] =  rsp_time
+                raw_item["fund"] = fund_token
+                for key, value in item.items():
+                    if type(value) == dict:
+                        for k1, v1 in value.items():
+                            new_key = key + "|" + k1
+                            raw_item[new_key] = v1
+                    else:
+                        raw_item[key] = value
+                raw_querydata.append(raw_item)
+            if not rsp_time in rsp_query_data.keys():
+                rsp_query_data[rsp_time] = raw_querydata
+        return rsp_query_data

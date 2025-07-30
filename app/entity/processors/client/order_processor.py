@@ -389,6 +389,19 @@ class OrderProcessor:
         
         return all_data_dict
     
+    def show_queryorder_summary(self, account):
+        fund = account.split("|")[0]
+        querytype = account.split("|")[1]
+        typequerydict = {
+            "normal":self.query_order_dict,
+            "rzrq":self.query_rzrq_order_dict,
+            "ggt":self.query_ggt_order_dict,
+        }
+        print("\n统计单账户查询请求返回行数")
+        print("查询账号：", account, '\n')
+        for query_time, querydata in typequerydict[querytype][fund].items():
+            print(query_time, len(querydata))
+
     def get_order_summary(self) -> Dict[str, Any]:
         """
         获取委托查询汇总信息
@@ -429,3 +442,36 @@ class OrderProcessor:
         print(f"港股通查询总数: {summary['total_ggt_queries']}")
         print(f"所有账户: {summary['all_accounts']}")
         print("=" * 30) 
+
+    def show_queryorder_all(self):
+        # 按时间戳统计查询条数
+        print("\n根据时间统计查询行数\n")
+        column_index = set()
+        row_index = set()
+        typequerydict = {
+            "normal":self.query_order_dict,
+            "rzrq":self.query_rzrq_order_dict,
+            "ggt":self.query_ggt_order_dict,
+        }
+        for querytype, querydict in typequerydict.items():
+            for fundkey, fundquerydata in querydict.items():
+                for timekey, querydata in fundquerydata.items():
+                    timestamp = timekey.split(' ')[1].split('.')[0]
+                    column_index.add("%s|%s" % (fundkey, querytype))
+                    row_index.add(timestamp)
+        column_index = list(column_index)
+        row_index = sorted(list(row_index))
+        
+        df = pd.DataFrame(index=row_index, columns=column_index)
+        for querytype, querydict in typequerydict.items():
+            for fundkey, fundquerydata in querydict.items():
+                for timekey, querydata in fundquerydata.items():
+                    timestamp = timekey.split(' ')[1].split('.')[0]
+                    df.loc[timestamp, "%s|%s" % (fundkey, querytype)] = len(querydata)
+        df = df.fillna(0)
+        df = df.loc[:, (df != 0).any(axis=0)]
+        df['total'] = df.sum(axis=1)
+        cols = df.columns.tolist()
+        cols = cols[-1:] + cols[:-1]  # 将 'total' 列移到最前面
+        df = df[cols]
+        display(df)

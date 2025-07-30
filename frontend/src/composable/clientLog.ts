@@ -19,7 +19,12 @@ export const useClientLogAnalyser = () => {
     setAccountsFetchMap,
     setFundFetchMap,
     setPositionFetchMap,
-    setOrderFetchMap
+    setOrderFetchMap,
+    setOrderSummary,
+    setTradeSummary,
+    setTradeFetchMap,
+    setIpoFetchMap,
+    setIpoLotteryFetchMap
   } = clientStore;
 
   const initClientLogAnalyser = async (file: File) => {
@@ -141,6 +146,102 @@ export const useClientLogAnalyser = () => {
     }
   }
 
+  const getOrderSummary = async () => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getOrderSummary()
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      setOrderSummary(res.data)
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getTradeLogs = async () => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getTradeQuery()
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      setTradeFetchMap(res.data)
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  } 
+
+  const getTradeSummary = async () => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getTradeSummary()
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      setTradeSummary(res.data)
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getIpoLogs = async () => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getIpoQuery()
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      setIpoFetchMap(res.data)
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getIpoLotteryLogs = async () => {
+
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getIpoLotteryQuery()
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      setIpoLotteryFetchMap(res.data)
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
   function checkoutClientLogAnalyserStatus () {
     // if (getLogAnalyserStatus(LogAnalyserType.Client) === LogAnalyserStatusType.None) {
     //   ElNotification.error({
@@ -159,6 +260,11 @@ export const useClientLogAnalyser = () => {
     getStatisticData,
     getFundLogs,
     getPositionLogs,
-    getOrderLogs
+    getOrderLogs,
+    getOrderSummary,
+    getTradeLogs,
+    getTradeSummary,
+    getIpoLogs,
+    getIpoLotteryLogs
   }
 }

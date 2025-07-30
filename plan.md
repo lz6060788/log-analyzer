@@ -381,7 +381,7 @@ class QueryProcessor(BaseProcessor):
 ## 前端日志解析工具开发进度（2025年7月）
 
 ### 需求描述
-- 在前端首页增加“日志解析工具”入口，进入后可粘贴日志文本，自动解析并高亮显示日志字段，支持一键美化查看日志中的JSON内容。
+- 在前端首页增加"日志解析工具"入口，进入后可粘贴日志文本，自动解析并高亮显示日志字段，支持一键美化查看日志中的JSON内容。
 
 ### 主要结构与组件
 - `src/components/common/MonacoEditor.vue`：通用Monaco编辑器组件，支持v-model、只读、主题等参数。
@@ -410,7 +410,7 @@ class QueryProcessor(BaseProcessor):
 
 ### 1. 日志解析增强
 - 新增对UUID（如6dd8b4d7-abc2-0861-8be9-c5bb931a62fd）的识别与提取，解析结果中增加uuid字段。
-- 分隔符处理优化：日志行分割时，忽略花括号（{}）内的“|”分隔符，仅在花括号外分割。
+- 分隔符处理优化：日志行分割时，忽略花括号（{}）内的"|"分隔符，仅在花括号外分割。
 - 类型定义`ParsedLogLine`同步增加uuid字段，所有字段均有详细注释。
 
 ### 2. 前端表格展示优化
@@ -444,3 +444,126 @@ class QueryProcessor(BaseProcessor):
    - [x] 日志解析逻辑增强
    - [x] 前端表格与 copyText 集成
    - [x] 规划文档同步更新 
+
+## 2025-01-27 API路由开发进度
+
+### 需求描述
+为 `ClientProcessorNew` 类中所有以 `get` 开头的方法添加对应的API路由，参考原有路由结构，提供Web友好的数据接口。
+
+### 技术方案说明
+- **路由前缀**: 使用 `/` 前缀区分新旧处理器
+- **导入更新**: 添加 `ClientProcessorNew` 的导入
+- **文件上传**: 新增 `/upload_new` 路由处理新处理器
+- **Session管理**: 使用 `clientProcessorNew` 作为session key
+- **参数处理**: 支持URL参数和路径参数两种方式
+- **错误处理**: 统一的错误响应格式
+
+### 新增路由列表
+
+#### 基础数据路由
+- `GET /statistics` - 获取请求统计信息
+- `GET /processing_summary` - 获取处理汇总信息
+- `GET /accounts` - 获取账户信息DataFrame
+- `GET /statistics_dataframe` - 获取统计数据DataFrame
+- `GET /all_accounts` - 获取所有账户列表
+
+#### 查询数据路由
+- `GET /fund_query_data` - 获取资金查询数据
+- `GET /position_query_data` - 获取持仓查询数据
+- `GET /order_query_data` - 获取委托查询数据
+- `GET /trade_query_data` - 获取成交查询数据
+
+#### 查询时间路由
+- `GET /position_querytime/<fundkey>` - 获取持仓查询时间列表
+- `GET /order_querytime/<fundkey>` - 获取委托查询时间列表
+- `GET /trade_querytime/<fundkey>` - 获取成交查询时间列表
+
+#### 新股申购路由
+- `GET /ipo_query_data` - 获取新股申购额度查询数据（支持fund参数）
+- `GET /ipo_lottery_data` - 获取新股中签明细查询数据（支持fund参数）
+
+#### 篮子交易路由
+- `GET /basket_query_data` - 获取篮子订单查询数据（支持source、fund、stockcode参数）
+- `GET /basketorder_detail_data/<instanceid>` - 获取指定母单的篮子订单明细
+- `GET /singleorder_data` - 获取单户订单数据（支持fund参数）
+- `GET /singleorder_cancel_data` - 获取单户撤单数据（支持fund参数）
+- `GET /basketorder_op_data` - 获取篮子订单操作数据（支持instanceid参数）
+
+#### 算法交易路由
+- `GET /algorithm_code` - 获取算法订单涉及的股票代码列表
+- `GET /algorithm_detail/<instanceid>` - 获取指定算法订单的明细
+- `GET /algorithm_push_detail/<instanceid>` - 获取算法订单推送明细（支持push_type参数）
+- `GET /algorithm_query_data` - 获取算法订单查询数据
+
+#### 条件交易路由
+- `GET /condition_summary_data` - 获取条件单汇总数据
+- `GET /condition_instance_detail_data/<order_no>` - 获取条件单实例明细数据
+- `GET /condition_order_detail_data/<order_no>` - 获取条件单母单操作明细数据
+- `GET /condition_security_order_detail_data/<order_no>` - 获取条件单证券操作明细数据（支持fund、security参数）
+- `GET /condition_initreqs_data/<order_no>` - 获取条件单初始请求数据
+- `GET /querycondition_data/<querytime>` - 获取条件单查询数据
+
+#### 融资融券路由
+- `GET /finable_security_data` - 获取可融资标的券数据（支持fund_key参数）
+- `GET /finable_security_failed` - 获取可融资标的券失败查询
+- `GET /finable_security_querytime/<fundkey>` - 获取指定资金账户的可融资标的券查询时间列表
+
+### 实现进度
+- [x] 导入语句更新
+- [x] 文件上传路由新增
+- [x] 基础数据路由实现
+- [x] 查询数据路由实现
+- [x] 查询时间路由实现
+- [x] 新股申购路由实现
+- [x] 篮子交易路由实现
+- [x] 算法交易路由实现
+- [x] 条件交易路由实现
+- [x] 融资融券路由实现
+- [x] 规划文档同步更新
+
+### 技术特点
+- **统一响应格式**: 使用 `@standard_json_response` 装饰器
+- **参数灵活性**: 支持URL参数和路径参数
+- **错误处理**: 统一的错误响应和状态码
+- **文档完善**: 每个路由都有详细的注释说明
+- **向后兼容**: 保持原有路由不变，新增路由使用 `/` 前缀
+
+## 2025-01-27 前端表格组件优化
+
+### 问题描述
+前端 `commonTable.ts` 组件中计算列的逻辑存在问题，只使用第一行的key来生成列，导致当第一行数据不完整时，其他行的数据无法正确显示。
+
+### 技术方案
+- **遍历所有行**: 使用 `Set` 数据结构收集所有行中的所有key
+- **类型安全**: 添加空值检查和类型检查
+- **性能优化**: 使用 `computed` 属性确保响应式更新
+
+### 实现细节
+```typescript
+const columns = computed(() => {
+  if (props.data.length === 0) return [];
+  
+  const allKeys = new Set<string>();
+  props.data.forEach(row => {
+    if (row && typeof row === 'object') {
+      Object.keys(row).forEach(key => {
+        allKeys.add(key);
+      });
+    }
+  });
+  
+  return Array.from(allKeys);
+});
+```
+
+### 修复内容
+- [x] 修改列计算逻辑，遍历所有行收集key
+- [x] 添加空值和类型检查
+- [x] 使用computed属性确保响应式
+- [x] 更新规划文档记录修复
+
+### 技术优势
+- **数据完整性**: 确保所有数据都能正确显示
+- **类型安全**: 添加了必要的类型检查
+- **性能优化**: 使用Set数据结构提高查找效率
+- **响应式**: 数据变化时自动更新列结构 

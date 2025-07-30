@@ -24,7 +24,7 @@ from .financing_processor import FinancingProcessor
 class ClientProcessorNew:
     """重构后的客户端处理器主类"""
     
-    def __init__(self, file_list: List[str]):
+    def __init__(self, file_list: List[str], isJupyter: bool = True):
         """
         初始化处理器
         
@@ -38,28 +38,15 @@ class ClientProcessorNew:
         pd.set_option('display.float_format', '{:.2f}'.format)
         
         # 初始化基础处理器
-        self.base_processor = BaseProcessor()
+        self.base_processor = BaseProcessor(isJupyter)
         self.state = self.base_processor.state
         self.req_pairs = self.base_processor.req_pairs
-        
-        # 初始化各模块处理器
-        self.statistics_processor = StatisticsProcessor(self.state, self.req_pairs, self.base_processor)
-        self.account_processor = AccountProcessor(self.state, self.req_pairs, self.base_processor)
-        self.fund_processor = FundProcessor(self.state, self.req_pairs, self.base_processor)
-        self.position_processor = PositionProcessor(self.state, self.req_pairs, self.base_processor)
-        self.order_processor = OrderProcessor(self.state, self.req_pairs, self.base_processor)
-        self.trade_processor = TradeProcessor(self.state, self.req_pairs, self.base_processor)
-        self.ipo_processor = IPOProcessor(self.state, self.req_pairs, self.base_processor)
-        self.basket_processor = BasketProcessor(self.state, self.req_pairs, self.base_processor)
-        self.algorithm_processor = AlgorithmProcessor(self.state, self.req_pairs, self.base_processor)
-        self.condition_processor = ConditionProcessor(self.state, self.req_pairs, self.base_processor)
-        self.financing_processor = FinancingProcessor(self.state, self.req_pairs, self.base_processor)
         
         # 存储文件列表
         self.file_list = file_list
         
         # 初始化数据存储
-        self._init_data_storage()
+        # self._init_data_storage()
     
     def _init_data_storage(self) -> None:
         """
@@ -133,6 +120,19 @@ class ClientProcessorNew:
         self.base_processor.parse(self.file_list)
         self.state = self.base_processor.state
         self.req_pairs = self.base_processor.req_pairs
+
+        # 初始化各模块处理器
+        self.statistics_processor = StatisticsProcessor(self.state, self.req_pairs)
+        self.account_processor = AccountProcessor(self.state, self.req_pairs)
+        self.fund_processor = FundProcessor(self.state, self.req_pairs)
+        self.position_processor = PositionProcessor(self.state, self.req_pairs)
+        self.order_processor = OrderProcessor(self.state, self.req_pairs)
+        self.trade_processor = TradeProcessor(self.state, self.req_pairs)
+        self.ipo_processor = IPOProcessor(self.state, self.req_pairs)
+        self.basket_processor = BasketProcessor(self.state, self.req_pairs, self.base_processor)
+        self.algorithm_processor = AlgorithmProcessor(self.state, self.req_pairs)
+        self.condition_processor = ConditionProcessor(self.state, self.req_pairs, self.base_processor)
+        self.financing_processor = FinancingProcessor(self.state, self.req_pairs)
         
         # 统计处理
         self.statistics_processor.parse_request_statistics()
@@ -359,6 +359,15 @@ class ClientProcessorNew:
         return self.position_processor.get_position_query_data()
     
     # 委托查询相关方法
+    def handle_order_query(self) -> List[str]:
+        """
+        处理委托查询
+        
+        Returns:
+            委托查询结果列表
+        """
+        return self.order_processor.handle_order_query()
+
     def get_order_querytime(self, fundkey: str) -> List[str]:
         """
         获取委托查询时间列表
@@ -389,7 +398,17 @@ class ClientProcessorNew:
             委托查询数据字典
         """
         return self.order_processor.get_order_query_data()
-    
+
+    def show_queryorder_summary(self, account: str):
+        self.order_processor.show_queryorder_summary(account)
+
+    def show_queryorder_all(self):
+        self.order_processor.show_queryorder_all()
+
+    def get_order_summary(self):
+        return self.order_processor.get_order_summary()
+
+    # 成交查询相关方法    
     def handle_trade_query(self) -> List[str]:
         """
         处理成交查询
@@ -398,8 +417,7 @@ class ClientProcessorNew:
             成交查询结果列表
         """
         return self.trade_processor.handle_trade_query()
-    
-    # 成交查询相关方法
+
     def get_trade_querytime(self, fundkey: str) -> List[str]:
         """
         获取成交查询时间列表
@@ -446,6 +464,9 @@ class ClientProcessorNew:
             成交查询数据字典
         """
         return self.trade_processor.get_trade_query_data()
+
+    def get_trade_summary(self):
+        return self.trade_processor.get_trade_summary()
 
     # 新股申购相关接口
     def handle_ipo_query(self) -> List[str]:

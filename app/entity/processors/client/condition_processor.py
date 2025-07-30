@@ -7,6 +7,7 @@ from typing import Dict, List, Any, Optional
 import pandas as pd
 from .models import ProcessingState, RequestPairsDict, ProcessingConfig
 import json
+from .base_processor import BaseProcessor
 
 class ConditionProcessor:
     """条件交易处理器类"""
@@ -110,7 +111,7 @@ class ConditionProcessor:
                     self.gradecondition_push[order_no]["grade_order"][symbol] = []
                 self.gradecondition_push[order_no]["grade_order"][symbol].append(orderdata)
         # 4. 查询母单
-        self.gradecondition_query_dict = self.state._handle_query_result("json", "rpc.gradecondition", "query_gradecondition", "data")
+        self.gradecondition_query_dict = self.base_processor._handle_query_result("json", "rpc.gradecondition", "query_gradecondition", "data")
         columns_gradecondition_querydata = ["rsp_time", "fund", "order_from", "order_no", "create_time", "update_time", "status_msg", "price_type", "side", "note"]
         for rsp_time, query_data in self.gradecondition_query_dict.items():
             df_query_gradecondition = ""

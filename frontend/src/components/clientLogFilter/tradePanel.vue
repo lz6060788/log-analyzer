@@ -7,15 +7,15 @@ import { useClientLogStore } from '@/store/clientLog'
 import { storeToRefs } from 'pinia';
 
 const clientLogStore = useClientLogStore();
-const { orderFetchMap, orderSummary } = storeToRefs(clientLogStore)
-const { getOrderLogs, getOrderSummary } = useClientLogAnalyser();
+const { tradeFetchMap, tradeSummary } = storeToRefs(clientLogStore)
+const { getTradeLogs, getTradeSummary } = useClientLogAnalyser();
 
 const isLoadingData = ref(false);
 const refreshData = async () => {
   reset();
   isLoadingData.value = true;
-  await getOrderLogs();
-  getOrderSummary();
+  await getTradeLogs();
+  getTradeSummary();
   isLoadingData.value = false;
 };
 
@@ -27,7 +27,7 @@ const tabs = [
 const tab = ref('normal');
 
 const currentTabMap =  computed(() => {
-  return orderFetchMap.value?.[tab.value] || {}
+  return tradeFetchMap.value?.[tab.value] || {}
 })
 const accountList = computed(() => Object.keys(currentTabMap.value));
 const currentAccount = ref('');
@@ -51,7 +51,7 @@ const reset = () => {
 </script>
 
 <template>
-  <dataPanel title="委托请求统计">
+  <dataPanel title="成交请求统计">
     <template #actions>
         <el-radio-group v-model="tab" size="small" @change="reset">
           <el-radio-button v-for="item in tabs" :key="item.value" :value="item.value">{{ item.label }}</el-radio-button>
@@ -67,12 +67,12 @@ const reset = () => {
     <template #data>
       <common-table :data="currentTableData"></common-table>
       <div class="mt-1">
-        <p class="leading-8">港股通账户数：{{ orderSummary.ggt_accounts }}</p>
-        <p class="leading-8">普通账户数：{{ orderSummary.normal_accounts }}</p>
-        <p class="leading-8">融资融券账户数：{{ orderSummary.rzrq_accounts }}</p>
-        <p class="leading-8">总港股通请求数：{{ orderSummary.total_ggt_queries }}</p>
-        <p class="leading-8">总普通请求数：{{ orderSummary.total_normal_queries }}</p>
-        <p class="leading-8">总融资融券请求数：{{ orderSummary.total_rzrq_queries }}</p>
+        <p class="leading-8">港股通账户数：{{ tradeSummary.ggt_accounts }}</p>
+        <p class="leading-8">普通账户数：{{ tradeSummary.normal_accounts }}</p>
+        <p class="leading-8">融资融券账户数：{{ tradeSummary.rzrq_accounts }}</p>
+        <p class="leading-8">总港股通请求数：{{ tradeSummary.total_ggt_queries }}</p>
+        <p class="leading-8">总普通请求数：{{ tradeSummary.total_normal_queries }}</p>
+        <p class="leading-8">总融资融券请求数：{{ tradeSummary.total_rzrq_queries }}</p>
       </div>
     </template>
   </dataPanel>

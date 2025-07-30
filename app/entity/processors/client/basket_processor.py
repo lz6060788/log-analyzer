@@ -6,6 +6,7 @@
 from typing import Dict, List, Any, Optional
 import pandas as pd
 from .models import ProcessingState, RequestPairsDict
+from .base_processor import BaseProcessor
 
 class BasketProcessor:
     """篮子交易处理器类"""
