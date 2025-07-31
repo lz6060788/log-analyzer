@@ -57,7 +57,17 @@ class FinancingProcessor:
                 self.finable_security_failed.append(result)
 
     def _get_request_list(self, protocol: str, servicename: str, cmd: str) -> List[str]:
-        return self.state.request_statics.get(protocol, {}).get(servicename, {}).get(cmd, [])
+        request_statics = self.state.request_statics
+        if protocol in request_statics.keys():
+            if servicename in request_statics[protocol].keys():
+                if cmd in request_statics[protocol][servicename].keys():
+                    return [d["key"] for d in request_statics[protocol][servicename][cmd]]
+                else:
+                    return []
+            else:
+                return []
+        else:
+            return []
 
     def _get_fund_by_fund_token(self, fund_token: str) -> str:
         return self.state.fundtoken_dict.get(fund_token, fund_token)

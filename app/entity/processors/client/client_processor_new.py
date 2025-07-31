@@ -44,74 +44,7 @@ class ClientProcessorNew:
         
         # 存储文件列表
         self.file_list = file_list
-        
-        # 初始化数据存储
-        # self._init_data_storage()
-    
-    def _init_data_storage(self) -> None:
-        """
-        初始化数据存储
-        """
-        # 资金查询相关
-        self.query_account_asset_dict = {}
-        self.query_rzrq_account_asset_dict = {}
-        self.query_ggt_account_asset_dict = {}
-        self.query_asset_failed_list = []
-        
-        # 持仓查询相关
-        self.query_account_stock_dict = {}
-        self.query_rzrq_account_stock_dict = {}
-        self.query_ggt_account_stock_dict = {}
-        self.query_stock_failed_list = []
-        
-        # 委托查询相关
-        self.query_order_dict = {}
-        self.query_rzrq_order_dict = {}
-        self.query_ggt_order_dict = {}
-        self.query_order_df = {}
-        
-        # 成交查询相关
-        self.query_trade_dict = {}
-        self.query_rzrq_trade_dict = {}
-        self.query_ggt_trade_dict = {}
-        self.query_trade_df = {}
-        
-        # 新股申购相关
-        self.xgsg_query_list = []
-        
-        # 可融资标的券查询相关
-        self.query_finable_security_dict = {}
-        self.current_finable_security = ""
-        self.finable_security_dict = {}
-        
-        # 篮子交易相关
-        self.singleorder_list = []
-        self.singleorder_cancellist = []
-        self.basketorder_list = []
-        self.basketorder_op_list = []
-        self.basketorder_detail_dict = {}
-        self.basketorder_push_raw = []
-        self.basketorder_push = {}
-        self.basketorder_push_cnts = 0
-        
-        # 算法交易相关
-        self.algorithm_push_raw = []
-        self.algorithm_push = {}
-        self.algorithm_list = []
-        self.algorithm_detail_dcit = {}
-        self.algorithm_query_dict = {}
-        self.query_algorithm_df = {}
-        
-        # 条件交易相关
-        self.gradecondition_query_dict = {}
-        self.query_gradecondition_df = {}
-        self.gradecondition_create = []
-        self.grade_condition_info = {}
-        self.gradecondition_push = {}
-        self.gradecondition_push_instruction = []
-        self.gradecondition_push_condition = []
-        self.gradecondition_push_order = []
-    
+
     def parse(self) -> None:
         """
         解析日志文件
@@ -133,22 +66,22 @@ class ClientProcessorNew:
         self.algorithm_processor = AlgorithmProcessor(self.state, self.req_pairs)
         self.condition_processor = ConditionProcessor(self.state, self.req_pairs, self.base_processor)
         self.financing_processor = FinancingProcessor(self.state, self.req_pairs)
-        
+
         # 统计处理
         self.statistics_processor.parse_request_statistics()
-        
+
         # 账户查询处理
         self.account_processor.parse_account_query()
-        
+
         # 资金查询处理
         self.fund_processor.parse_fund_query()
-        
+
         # 持仓查询处理
         self.position_processor.parse_position_query()
-        
+
         # 委托查询处理
         self.order_processor.parse_order_query()
-        
+
         # 成交查询处理
         self.trade_processor.parse_trade_query()
 
@@ -167,7 +100,7 @@ class ClientProcessorNew:
 
         # 融资融券相关解析
         self.financing_processor.parse_financing_query()
-    
+
     def show_request_statics(self) -> List[Dict[str, Any]]:
         """
         显示请求统计
@@ -176,7 +109,7 @@ class ClientProcessorNew:
             统计结果列表
         """
         return self.statistics_processor.show_request_statics()
-    
+
     def show_processing_summary(self) -> None:
         """
         显示处理汇总信息
@@ -408,7 +341,7 @@ class ClientProcessorNew:
     def get_order_summary(self):
         return self.order_processor.get_order_summary()
 
-    # 成交查询相关方法    
+    # 成交查询相关方法
     def handle_trade_query(self) -> List[str]:
         """
         处理成交查询
@@ -560,36 +493,6 @@ class ClientProcessorNew:
             篮子订单明细列表
         """
         return self.basket_processor.get_basketorder_detail_data(instanceid)
-    def get_singleorder_data(self, fund: Optional[str] = None) -> List[Dict[str, Any]]:
-        """
-        获取单户订单数据
-        
-        Args:
-            fund: 资金账户（可选）
-        Returns:
-            单户订单数据列表
-        """
-        return self.basket_processor.get_singleorder_data(fund)
-    def get_singleorder_cancel_data(self, fund: Optional[str] = None) -> List[Dict[str, Any]]:
-        """
-        获取单户撤单数据
-        
-        Args:
-            fund: 资金账户（可选）
-        Returns:
-            单户撤单数据列表
-        """
-        return self.basket_processor.get_singleorder_cancel_data(fund)
-    def get_basketorder_op_data(self, instanceid: Optional[str] = None) -> List[Dict[str, Any]]:
-        """
-        获取篮子订单操作数据
-        
-        Args:
-            instanceid: 母单ID（可选）
-        Returns:
-            操作数据列表
-        """
-        return self.basket_processor.get_basketorder_op_data(instanceid) 
 
     def show_basket_summary(self, source: str = "全部", fund: str = "", stockcode: str = "", showorders: bool = False) -> None:
         """
@@ -644,6 +547,53 @@ class ClientProcessorNew:
         """
         self.basket_processor.show_basket_initreqs(instance, isfullreqs) 
 
+    def get_basket_summary_data(self, source: Optional[str] = None, fund: str = "", stockcode: str = "") -> List[Dict[str, Any]]:
+        """
+        获取篮子订单查询数据
+
+        Args:
+            querytime: 查询时间
+        """
+        return self.basket_processor.get_basket_summary_data(source,  fund, stockcode)
+
+    def get_basket_instance_detail(self, instanceid: str) -> Dict[str, Any]:
+        """
+        获取指定母单的实例详情
+
+        Args:
+            instanceid: 母单ID
+        """
+        return self.basket_processor.get_basket_instance_detail(instanceid)
+
+    def get_basket_order_detail(self, instanceid: str, fund: str = "", stockcode: str = "") -> Dict[str, Any]:
+        """
+        获取指定母单的全部子单详情
+
+        Args:
+            instanceid: 母单ID
+            fund: 资金账户
+            stockcode: 股票代码
+        """
+        return self.basket_processor.get_basket_order_detail(instanceid, fund, stockcode)
+
+    def get_basket_query_data(self, querytime: str = None) -> List[Dict[str, Any]]:
+        """
+        获取篮子订单查询数据
+
+        Args:
+            querytime: 查询时间
+        """
+        return self.basket_processor.get_basket_query_data(querytime)
+
+    def get_basket_initreqs(self, instance: str) -> Dict[str, Any]:
+        """
+        获取指定母单的原始请求明细
+
+        Args:
+            instance: 母单ID
+        """
+        return self.basket_processor.get_basket_initreqs(instance)
+
     # 算法交易相关接口
     def show_queryalgorithm(self, querytime: str) -> None:
         """
@@ -690,6 +640,14 @@ class ClientProcessorNew:
             算法订单数据列表
         """
         return self.algorithm_processor.get_algorithm_query_data() 
+    def get_new_algorithm_order(self) -> List[Dict[str, Any]]:
+        """
+        获取当日新增的算法订单
+
+        Returns:
+            算法订单数据列表
+        """
+        return self.algorithm_processor.get_new_algorithm_order()
 
     # 条件交易相关接口
     def show_condition_summary(self) -> None:

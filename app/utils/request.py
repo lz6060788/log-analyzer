@@ -55,7 +55,7 @@ def standard_json_response(func):
             print(f"接口 {func.__name__} 发生错误: {e}")
             print("错误堆栈:")
             print(traceback.format_exc())
-            
+
             return jsonify({
                 'code': -1,
                 'data': None,

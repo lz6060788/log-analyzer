@@ -203,63 +203,77 @@ def get_ipo_lottery_data():
         return None, -1, '请先上传文件'
 
 # 篮子交易相关路由
+@client_bp.route('/basket_summary_data', methods=['GET'])
+@standard_json_response
+def get_basket_summary_data():
+    """获取篮子订单汇总数据"""
+    source = request.args.get('source')
+    fund = request.args.get('fund', '')
+    stockcode = request.args.get('stockcode', '')
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_basket_summary_data(source, fund, stockcode)
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/basket_instance_detail', methods=['GET'])
+@standard_json_response
+def get_basket_instance_detail():
+    """获取指定母单的实例详情"""
+    instanceid = request.args.get('instanceid')
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_basket_instance_detail(instanceid)
+    else:
+        return None, -1, '请先上传文件'
+
+@client_bp.route('/basket_order_detail', methods=['GET'])
+@standard_json_response
+def get_basket_order_detail():
+    """获取指定母单的全部子单详情"""
+    instanceid = request.args.get('instanceid')
+    fund = request.args.get('fund', '')
+    stockcode = request.args.get('stockcode', '')
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_basket_order_detail(instanceid, fund, stockcode)
+    else:
+        return None, -1, '请先上传文件'
+
 @client_bp.route('/basket_query_data', methods=['GET'])
 @standard_json_response
 def get_basket_query_data():
     """获取篮子订单查询数据"""
     clientreq = session.get('clientPropcessor')
     if clientreq:
-        source = request.args.get('source')
-        fund = request.args.get('fund', '')
-        stockcode = request.args.get('stockcode', '')
-        return clientreq.get_basket_query_data(source, fund, stockcode)
+        querytime = request.args.get('querytime')
+        return clientreq.get_basket_query_data(querytime)
     else:
         return None, -1, '请先上传文件'
 
-@client_bp.route('/basketorder_detail_data/<instanceid>', methods=['GET'])
+@client_bp.route('/basket_initreqs', methods=['GET'])
 @standard_json_response
-def get_basketorder_detail_data(instanceid):
-    """获取指定母单的篮子订单明细"""
+def get_basket_initreqs():
+    """获取指定母单的原始请求明细"""
+    instance = request.args.get('instance')
     clientreq = session.get('clientPropcessor')
     if clientreq:
-        return clientreq.get_basketorder_detail_data(instanceid)
+        return clientreq.get_basket_initreqs(instance)
     else:
         return None, -1, '请先上传文件'
 
-@client_bp.route('/singleorder_data', methods=['GET'])
-@standard_json_response
-def get_singleorder_data():
-    """获取单户订单数据"""
-    clientreq = session.get('clientPropcessor')
-    if clientreq:
-        fund = request.args.get('fund')
-        return clientreq.get_singleorder_data(fund if fund else None)
-    else:
-        return None, -1, '请先上传文件'
-
-@client_bp.route('/singleorder_cancel_data', methods=['GET'])
-@standard_json_response
-def get_singleorder_cancel_data():
-    """获取单户撤单数据"""
-    clientreq = session.get('clientPropcessor')
-    if clientreq:
-        fund = request.args.get('fund')
-        return clientreq.get_singleorder_cancel_data(fund if fund else None)
-    else:
-        return None, -1, '请先上传文件'
-
-@client_bp.route('/basketorder_op_data', methods=['GET'])
-@standard_json_response
-def get_basketorder_op_data():
-    """获取篮子订单操作数据"""
-    clientreq = session.get('clientPropcessor')
-    if clientreq:
-        instanceid = request.args.get('instanceid')
-        return clientreq.get_basketorder_op_data(instanceid if instanceid else None)
-    else:
-        return None, -1, '请先上传文件'
 
 # 算法交易相关路由
+@client_bp.route('/get_new_algorithm_order', methods=['GET'])
+@standard_json_response
+def get_new_algorithm_order():
+    """获取当日新增的算法订单"""
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        return clientreq.get_new_algorithm_order()
+    else:
+        return None, -1, '请先上传文件'
+
 @client_bp.route('/algorithm_code', methods=['GET'])
 @standard_json_response
 def get_algorithm_code():
@@ -270,10 +284,11 @@ def get_algorithm_code():
     else:
         return None, -1, '请先上传文件'
 
-@client_bp.route('/algorithm_detail/<instanceid>', methods=['GET'])
+@client_bp.route('/algorithm_detail', methods=['GET'])
 @standard_json_response
-def get_algorithm_detail(instanceid):
+def get_algorithm_detail():
     """获取指定算法订单的明细"""
+    instanceid = request.args.get('instanceid')
     clientreq = session.get('clientPropcessor')
     if clientreq:
         result = clientreq.get_algorithm_detail(instanceid)
@@ -281,10 +296,12 @@ def get_algorithm_detail(instanceid):
     else:
         return None, -1, '请先上传文件'
 
-@client_bp.route('/algorithm_push_detail/<instanceid>', methods=['GET'])
+@client_bp.route('/algorithm_push_detail', methods=['GET'])
 @standard_json_response
-def get_algorithm_push_detail(instanceid):
+def get_algorithm_push_detail():
     """获取算法订单推送明细"""
+    instanceid = request.args.get('instanceid')
+    push_type = request.args.get('push_type')
     clientreq = session.get('clientPropcessor')
     if clientreq:
         push_type = request.args.get('push_type', '')

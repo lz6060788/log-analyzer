@@ -302,6 +302,7 @@ class ProcessingState:
 
         # 推送
         self.basketorder_push_cnts = 0
+        self.basketorder_push_raw = []
         self.algorithm_push_raw = []
         self.gradecondition_push_instruction = []
         self.gradecondition_push_condition = []

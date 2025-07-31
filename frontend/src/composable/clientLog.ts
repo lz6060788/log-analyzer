@@ -24,7 +24,14 @@ export const useClientLogAnalyser = () => {
     setTradeSummary,
     setTradeFetchMap,
     setIpoFetchMap,
-    setIpoLotteryFetchMap
+    setIpoLotteryFetchMap,
+    setFinableSecurityMap,
+    setFinableSecurityFailed,
+    setBasketSummary,
+    setBasketOrderDetail,
+    setBasketQueryData,
+    setAlgorithmQueryData,
+    setNewAlgorithmOrder
   } = clientStore;
 
   const initClientLogAnalyser = async (file: File) => {
@@ -182,7 +189,7 @@ export const useClientLogAnalyser = () => {
         message: e.message,
       })
     }
-  } 
+  }
 
   const getTradeSummary = async () => {
     if (!checkoutClientLogAnalyserStatus()) {
@@ -242,6 +249,230 @@ export const useClientLogAnalyser = () => {
     }
   }
 
+  const getFinableSecurityData = async () => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getFinableSecurityData()
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      setFinableSecurityMap(res.data)
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getFinableSecurityFailed = async () => {
+
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getFinableSecurityFailed()
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      setFinableSecurityFailed(res.data)
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getBasketSummaryData = async (source: string, fund: string, stockcode: string) => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getBasketSummaryData(source, fund, stockcode)
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      setBasketSummary(res.data)
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getBasketInstanceDetail = async (instanceid: string) => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getBasketInstanceDetail(instanceid)
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getBasketOrderDetail = async (instanceid: string) => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getBasketOrderDetail(instanceid)
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      setBasketOrderDetail(res.data)
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getBasketQueryData = async () => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getBasketQueryData()
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      setBasketQueryData(res.data)
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getBasketInitReqs = async () => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getBasketInitReqs()
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getNewAlgorithmOrder = async () => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getNewAlgorithmOrder()
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      setNewAlgorithmOrder(res.data)
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getAlgorithmQueryData = async () => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getAlgorithmQueryData()
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      setAlgorithmQueryData(res.data)
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getAlgorithmDetail = async (instanceid: string) => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getAlgorithmDetail(instanceid)
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getAlgorithmPushDetail = async (instanceid: string, push_type: string) => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getAlgorithmPushDetail(instanceid, push_type)
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getAlgorithmCode = async () => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getAlgorithmCode()
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
   function checkoutClientLogAnalyserStatus () {
     // if (getLogAnalyserStatus(LogAnalyserType.Client) === LogAnalyserStatusType.None) {
     //   ElNotification.error({
@@ -265,6 +496,18 @@ export const useClientLogAnalyser = () => {
     getTradeLogs,
     getTradeSummary,
     getIpoLogs,
-    getIpoLotteryLogs
+    getIpoLotteryLogs,
+    getFinableSecurityData,
+    getFinableSecurityFailed,
+    getBasketSummaryData,
+    getBasketInstanceDetail,
+    getBasketOrderDetail,
+    getBasketQueryData,
+    getBasketInitReqs,
+    getNewAlgorithmOrder,
+    getAlgorithmQueryData,
+    getAlgorithmDetail,
+    getAlgorithmPushDetail,
+    getAlgorithmCode
   }
 }

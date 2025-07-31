@@ -422,6 +422,13 @@ class BaseProcessor:
         if isfullreqs:
             print(json.dumps(response))
         print("-"*100) 
+    
+    def get_request_and_response(self, req_id: str) -> Dict[str, Any]:
+        """
+        获取请求和响应
+        """
+        item = self.req_pairs[req_id]
+        return item["request"], item["response"]
 
     def _is_altorithm_push(self, line: str, d: List[str]) -> bool:
         """

@@ -7,6 +7,7 @@ from typing import Dict, List, Any, Optional, Tuple
 import pandas as pd
 from datetime import datetime
 from .models import ProcessingState, RequestPairsDict
+import json
 
 class AlgorithmProcessor:
     """算法交易处理器类"""
@@ -114,9 +115,32 @@ class AlgorithmProcessor:
                         new_algorithm_detail.pop("timelimit", None)
                         self.algorithm_detail_dict[instanceid] = new_algorithm_detail
 
+        # 处理推送数据
+        self._handle_algorithm_push()
+
+
+    def _handle_algorithm_push(self):
+        for req_time, raw_response in self.state.algorithm_push_raw:
+            response_json = json.loads(raw_response)
+            response_dict = response_json["params"]
+            response_dict["req_time"] = req_time
+            action = response_dict["action"]
+            InstanceID = response_dict["instructionid"]
+            if InstanceID not in self.algorithm_push.keys():
+                self.algorithm_push[InstanceID] = {}
+            if action not in self.algorithm_push[InstanceID].keys():
+                self.algorithm_push[InstanceID][action] = []
+            self.algorithm_push[InstanceID][action].append(response_dict)
+
     def handle_algorithm(self):
         df_algorithm = pd.DataFrame(self.algorithm_list)
         return df_algorithm
+
+    def get_new_algorithm_order(self) -> List[Dict[str, Any]]:
+        """
+        获取当日新增的算法订单
+        """
+        return self.algorithm_list
 
     def get_algorithm_code(self) -> List[str]:
         """
@@ -141,23 +165,22 @@ class AlgorithmProcessor:
             return df_algorithm_detail
         return None
 
-    def get_algorithm_push_detail(self, instanceid: str, push_type: str) -> Tuple[Optional[str], Optional[pd.DataFrame]]:
+    def get_algorithm_push_detail(self, instanceid: str, push_type: str) -> List[Dict[str, Any]]:
         """
         Jupyter友好：获取算法单推送详情
         """
-        import pandas as pd
         dict_pushtype_keep_columns = {
-            "instruction":["req_time", "avgpx", "qty", "qtyleft", "qtycancel", "qtytrade", "statusmsg", "msg"],
-            "order":["req_time", "orderid", "operationmsg", "avgpx", "price", "qty", "qtyleft", "qtycancel", "qtytrade", "statusmsg", "msg"],
+            "twap_instruction":["req_time", "avgpx", "qty", "qtyleft", "qtycancel", "qtytrade", "statusmsg", "msg"],
+            "twap_order":["req_time", "orderid", "operationmsg", "avgpx", "price", "qty", "qtyleft", "qtycancel", "qtytrade", "statusmsg", "msg"],
         }
         if instanceid not in self.algorithm_push:
-            return None, None
+            return []
         push_key = next((k for k in self.algorithm_push[instanceid] if push_type in k), None)
         if not push_key:
-            return None, None
+            return []
         push_data = self.algorithm_push[instanceid][push_key]
         df_algorithm_push = pd.DataFrame(push_data, columns = dict_pushtype_keep_columns[push_type])
-        return push_key, df_algorithm_push
+        return df_algorithm_push.to_dict(orient="records")
 
     # Jupyter友好型方法
     def show_queryalgorithm(self, querytime: str) -> None:
@@ -173,8 +196,4 @@ class AlgorithmProcessor:
         """
         获取算法单查询结构化数据，适合web接口返回
         """
-        result = []
-        for df in self.query_algorithm_df.values():
-            if isinstance(df, pd.DataFrame):
-                result.extend(df.to_dict(orient="records"))
-        return result 
+        return self.query_algorithm_df

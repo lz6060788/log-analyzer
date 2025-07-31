@@ -6,6 +6,9 @@ import positionPanel from '@/components/clientLogFilter/positionPanel.vue';
 import orderPanel from '@/components/clientLogFilter/orderPanel.vue';
 import tradePanel from '@/components/clientLogFilter/tradePanel.vue';
 import ipoPanel from '@/components/clientLogFilter/ipoPanel.vue';
+import finablePanel from '@/components/clientLogFilter/finablePanel.vue';
+import basketPanel from '@/components/clientLogFilter/basketPanel.vue';
+import algorithmPanel from '@/components/clientLogFilter/algorithmPanel.vue';
 </script>
 
 <template>
@@ -16,5 +19,8 @@ import ipoPanel from '@/components/clientLogFilter/ipoPanel.vue';
   <order-panel></order-panel>
   <trade-panel></trade-panel>
   <ipo-panel></ipo-panel>
+  <finable-panel></finable-panel>
+  <basket-panel></basket-panel>
+  <algorithm-panel></algorithm-panel>
 </template>
 

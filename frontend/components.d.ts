@@ -9,6 +9,8 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AccountsPanel: typeof import('./src/components/clientLogFilter/accountsPanel.vue')['default']
+    AlgorithmPanel: typeof import('./src/components/clientLogFilter/algorithmPanel.vue')['default']
+    BasketPanel: typeof import('./src/components/clientLogFilter/basketPanel.vue')['default']
     copy: typeof import('./src/components/clientLogFilter/tradePanel copy.vue')['default']
     CopyLink: typeof import('./src/components/common/copyLink.vue')['default']
     CopyText: typeof import('./src/components/common/copyText.vue')['default']
@@ -16,6 +18,7 @@ declare module 'vue' {
     ElButton: typeof import('element-plus/es')['ElButton']
     ElDialog: typeof import('element-plus/es')['ElDialog']
     ElIcon: typeof import('element-plus/es')['ElIcon']
+    ElInput: typeof import('element-plus/es')['ElInput']
     ElOption: typeof import('element-plus/es')['ElOption']
     ElRadioButton: typeof import('element-plus/es')['ElRadioButton']
     ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
@@ -26,6 +29,7 @@ declare module 'vue' {
     ElTabs: typeof import('element-plus/es')['ElTabs']
     ElText: typeof import('element-plus/es')['ElText']
     ElUpload: typeof import('element-plus/es')['ElUpload']
+    FinablePanel: typeof import('./src/components/clientLogFilter/finablePanel.vue')['default']
     FundPanel: typeof import('./src/components/clientLogFilter/fundPanel.vue')['default']
     FundsPanel: typeof import('./src/components/clientLogFilter/fundsPanel.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']

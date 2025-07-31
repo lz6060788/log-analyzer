@@ -42,14 +42,49 @@ export const useClientLogStore = defineStore('clientLog', () => {
     tradeSummary.value = data
   }
 
-  const ipoFetchMap = ref<any>({});
+  const ipoFetchMap = ref<any>([]);
   const setIpoFetchMap = (data: any) => {
     ipoFetchMap.value = data
   }
 
-  const ipoLotteryFetchMap = ref<any>({});
+  const ipoLotteryFetchMap = ref<any>([]);
   const setIpoLotteryFetchMap = (data: any) => {
     ipoLotteryFetchMap.value = data
+  }
+
+  const finableSecurityMap = ref<any>({});
+  const setFinableSecurityMap = (data: any) => {
+    finableSecurityMap.value = data
+  }
+
+  const finableSecurityFailed = ref<any>([]);
+  const setFinableSecurityFailed = (data: any) => {
+    finableSecurityFailed.value = data
+  }
+
+  const basketSummary = ref<any>([]);
+  const setBasketSummary = (data: any) => {
+    basketSummary.value = data
+  }
+
+  const basketOrderDetail = ref<any>([]);
+  const setBasketOrderDetail = (data: any) => {
+    basketOrderDetail.value = data
+  }
+
+  const basketQueryData = ref<any>({});
+  const setBasketQueryData = (data: any) => {
+    basketQueryData.value = data
+  }
+
+  const newAlgorithmOrder = ref<any>([]);
+  const setNewAlgorithmOrder = (data: any) => {
+    newAlgorithmOrder.value = data
+  }
+
+  const algorithmQueryData = ref<any>({});
+  const setAlgorithmQueryData = (data: any) => {
+    algorithmQueryData.value = data
   }
 
   return {
@@ -73,5 +108,19 @@ export const useClientLogStore = defineStore('clientLog', () => {
     setIpoFetchMap,
     ipoLotteryFetchMap,
     setIpoLotteryFetchMap,
+    finableSecurityMap,
+    setFinableSecurityMap,
+    finableSecurityFailed,
+    setFinableSecurityFailed,
+    basketSummary,
+    setBasketSummary,
+    basketOrderDetail,
+    setBasketOrderDetail,
+    basketQueryData,
+    setBasketQueryData,
+    algorithmQueryData,
+    setAlgorithmQueryData,
+    newAlgorithmOrder,
+    setNewAlgorithmOrder
   }
 })
