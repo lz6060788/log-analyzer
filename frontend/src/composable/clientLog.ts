@@ -36,17 +36,15 @@ export const useClientLogAnalyser = () => {
     setConditionQueryData
   } = clientStore;
 
-  const initClientLogAnalyser = async (file: File) => {
+  const initClientLogAnalyser = async (files: File[]) => {
     setLogAnalyserStatus(LogAnalyserType.Client, LogAnalyserStatusType.None)
     try {
-      const formData = new FormData();
-      formData.append('file', file);
       setLogAnalyserStatus(LogAnalyserType.Client, LogAnalyserStatusType.Running)
-      const res = await clientLogApi.uploadClientLog(formData)
+      const res = await clientLogApi.uploadClientLog(files)
       if (res.code === 0) {
         ElNotification.success({
           title: '提示',
-          message: '客户端全量日志已上传并解析成功',
+          message: `客户端全量日志已上传并解析成功，共上传 ${files.length} 个文件`,
         })
         setLogAnalyserStatus(LogAnalyserType.Client, LogAnalyserStatusType.Ready)
       } else {

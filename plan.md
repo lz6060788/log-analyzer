@@ -566,4 +566,157 @@ const columns = computed(() => {
 - **数据完整性**: 确保所有数据都能正确显示
 - **类型安全**: 添加了必要的类型检查
 - **性能优化**: 使用Set数据结构提高查找效率
-- **响应式**: 数据变化时自动更新列结构 
+- **响应式**: 数据变化时自动更新列结构
+
+## 2025-01-27 悬浮导航组件开发与拖拽Hook重构
+
+### 需求描述
+开发一个悬浮的导航列表组件，支持拖拽、展开收起、锚点跳转等功能，用于长页面的快速导航。同时将拖拽功能封装为可复用的hook。
+
+### 技术方案说明
+- **组件架构**: 采用Vue 3 Composition API + TypeScript
+- **样式方案**: 使用Tailwind CSS实现响应式设计
+- **交互功能**: 支持鼠标和触摸拖拽、展开收起、锚点跳转
+- **边界限制**: 自动限制在屏幕边界内，防止拖拽出屏幕
+- **性能优化**: 使用事件委托和防抖处理
+- **Hook封装**: 将拖拽逻辑抽离为可复用的composable
+
+### 主要功能特性
+- ✅ 悬浮在屏幕右上角，可自定义初始位置
+- ✅ 支持鼠标和触摸拖拽，边界限制
+- ✅ 可展开/收起导航列表，节省屏幕空间
+- ✅ 点击导航项平滑跳转到对应锚点
+- ✅ 响应式设计，适配不同屏幕尺寸
+- ✅ 自定义滚动条样式，提升用户体验
+- ✅ 支持组件外传入导航数据
+- ✅ 拖拽功能封装为可复用hook
+
+### 文件结构
+#### 组件文件
+- `FloatingNavigation.vue`: 主组件文件
+- `README-FloatingNavigation.md`: 详细使用文档
+
+#### Hook文件
+- `useDraggable.ts`: 可复用的拖拽hook
+- `DraggableExample.vue`: 拖拽hook使用示例
+- `README-useDraggable.md`: 拖拽hook详细文档
+
+### 技术实现细节
+- **拖拽Hook**: 封装完整的拖拽逻辑，支持配置和回调
+- **触摸支持**: 同时支持touchstart/touchmove/touchend
+- **边界计算**: 根据组件尺寸和屏幕尺寸动态计算边界
+- **锚点跳转**: 使用scrollIntoView实现平滑滚动
+- **状态管理**: 使用ref管理组件状态
+- **事件清理**: 自动管理事件监听器的添加和移除
+
+### Hook功能特性
+- ✅ 支持鼠标和触摸拖拽
+- ✅ 可配置边界限制
+- ✅ 支持动态启用/禁用
+- ✅ 提供拖拽回调函数
+- ✅ 自动清理事件监听器
+- ✅ 完整的TypeScript类型支持
+
+### 实现进度
+- [x] 组件基础架构搭建
+- [x] 拖拽功能实现
+- [x] 拖拽功能重构为hook
+- [x] 展开收起功能实现
+- [x] 锚点跳转功能实现
+- [x] 边界限制功能实现
+- [x] 样式美化与响应式设计
+- [x] 拖拽hook使用示例开发
+- [x] 详细文档编写
+- [x] 规划文档同步更新
+
+### 使用示例
+```vue
+<template>
+  <FloatingNavigation
+    title="页面导航"
+    :navigation-items="navigationItems"
+    :initial-position="{ x: window.innerWidth - 280, y: 20 }"
+  />
+</template>
+
+<script setup lang="ts">
+const navigationItems = [
+  { title: '项目概述', anchor: 'section1' },
+  { title: '技术架构', anchor: 'section2' },
+  { title: '功能特性', anchor: 'section3' }
+]
+</script>
+```
+
+### Hook使用示例
+```vue
+<template>
+  <div
+    class="w-32 h-32 bg-blue-500 rounded cursor-move"
+    :style="draggable.positionStyle"
+    @mousedown="draggable.startDrag"
+    @touchstart="draggable.startDrag"
+  >
+    拖拽我
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useDraggable } from '@/composable/useDraggable'
+
+const draggable = useDraggable({
+  initialPosition: { x: 100, y: 100 },
+  boundary: { minX: 0, minY: 0, maxX: 400, maxY: 300 },
+  onDragStart: () => console.log('开始拖拽'),
+  onDragEnd: (position) => console.log('拖拽结束:', position)
+})
+</script>
+```
+
+### 技术优势
+- **用户体验**: 流畅的拖拽体验和视觉反馈
+- **可定制性**: 支持自定义样式、位置、数据
+- **可访问性**: 支持键盘导航和屏幕阅读器
+- **性能优化**: 事件监听器自动清理，避免内存泄漏
+- **类型安全**: 完整的TypeScript类型定义
+- **代码复用**: 拖拽功能封装为hook，可在其他组件中复用
+- **维护性**: 逻辑分离，便于维护和测试
+
+## 2025-01-27 拖拽性能优化
+
+### 问题描述
+用户反馈拖拽组件存在延迟问题，影响用户体验。
+
+### 性能优化方案
+#### 1. 使用requestAnimationFrame优化位置更新
+- **问题**: 直接更新DOM位置可能导致重排重绘
+- **解决**: 使用requestAnimationFrame在下一帧更新位置
+- **效果**: 减少重排重绘，提高渲染性能
+
+#### 2. 启用硬件加速
+- **问题**: 使用left/top定位无法启用GPU加速
+- **解决**: 使用transform3d启用硬件加速
+- **效果**: 拖拽更加流畅，减少CPU占用
+
+#### 3. 优化事件处理
+- **问题**: 事件监听器配置不当影响性能
+- **解决**: 使用passive: false优化mousemove/touchmove事件
+- **效果**: 减少事件处理延迟
+
+#### 4. 添加CSS优化
+- **问题**: 缺少渲染优化提示
+- **解决**: 添加willChange、backface-visibility等CSS属性
+- **效果**: 浏览器更好地优化渲染
+
+### 优化效果
+- ✅ 拖拽响应更加及时
+- ✅ 移动更加流畅
+- ✅ 减少CPU占用
+- ✅ 提升整体用户体验
+
+### 测试验证
+创建了`DragPerformanceTest.vue`组件用于验证优化效果，包含：
+- 基础拖拽测试
+- 边界限制拖拽测试  
+- 高性能拖拽测试
+- 性能指标说明 

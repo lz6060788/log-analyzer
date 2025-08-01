@@ -24,27 +24,39 @@ def profile():
 @standard_json_response
 def upload_file():
     # 检查是否有文件部分
-    if 'file' not in request.files:
+    if 'files' not in request.files:
         return None, -1, '文件不存在'
     
-    file = request.files['file']
+    files = request.files.getlist('files')
 
     # 如果用户没有选择文件
-    if file.filename == '':
+    if not files or all(file.filename == '' for file in files):
         return None, -1, '文件不存在'
 
-    # 检查文件类型是否允许
-    if not (file and allowed_file(file.filename)):
-        return None, -1, '非日志文件，请勿上传'
+    # 检查所有文件类型是否允许
+    for file in files:
+        if file.filename and not allowed_file(file.filename):
+            return None, -1, f'文件 {file.filename} 非日志文件，请勿上传'
     
     try:
-        # 尝试以文本形式读取
-        file_content = file.read().decode('gb2312', errors='ignore')  # 忽略无法解码的字符
+        # 合并所有文件内容
+        all_file_contents = []
+        for file in files:
+            if file.filename:  # 确保文件不为空
+                try:
+                    file_content = file.read().decode('gb2312', errors='ignore')  # 忽略无法解码的字符
+                    all_file_contents.append(file_content)
+                except UnicodeDecodeError as e:
+                    print(f"文件 {file.filename} 解码失败")
+                    print("错误堆栈:")
+                    print(traceback.format_exc())
+                    return None, -1, f'文件 {file.filename} 解析失败'
+        
         print('开始解析')
         
         # 添加详细的错误处理
         try:
-            clientreq = ClientProcessorNew([file_content], isJupyter=False)
+            clientreq = ClientProcessorNew(all_file_contents, isJupyter=False)
             print('ClientProcessorNew 实例化成功')
         except Exception as e:
             print(f"ClientProcessorNew 实例化失败")
@@ -65,11 +77,6 @@ def upload_file():
         print("解析完成", "解析失败日志行数:", len(clientreq.state.illegal_reqs))
         print("跳过不处理的日志行数:", len(clientreq.state.skipped_reqs))
         return None
-    except UnicodeDecodeError as e:
-        print(f"文件解码失败")
-        print("错误堆栈:")
-        print(traceback.format_exc())
-        return None, -1, '文件解析失败'
     except Exception as e:
         print(f"未知错误")
         print("错误堆栈:")

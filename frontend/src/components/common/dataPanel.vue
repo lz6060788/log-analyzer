@@ -6,7 +6,7 @@
     <!-- 卡片标题与操作区域 -->
     <div class="flex justify-between items-center bg-orange-100 px-4 py-2 border-0 border-b-2 border-gray-200 border-solid">
       <!-- 卡片标题 -->
-      <h3 class="text-lg font-semibold">{{ title }}</h3>
+      <h3 class="text-lg font-semibold select-none" :id="title">{{ title }}</h3>
 
       <!-- 操作按钮区域 -->
       <div class="flex items-center gap-2">
@@ -21,7 +21,7 @@
           class="h-5 w-5 hover:text-blue-500 cursor-pointer"
           @click="toggleFullscreen"
         ></ArrowsPointingInIcon>
-        
+
         <!-- 展开/收起按钮 -->
         <ChevronDoubleUpIcon
           class="h-5 w-5 hover:text-blue-500 cursor-pointer"

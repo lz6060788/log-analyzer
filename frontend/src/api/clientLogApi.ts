@@ -4,7 +4,11 @@ import type { AxiosResponse } from 'axios';
 import type { LogLine } from '@/types/client/log';
 
 const api = {
-  uploadClientLog: (formData: FormData): Promise<RespType<null>> => {
+  uploadClientLog: (files: File[]): Promise<RespType<null>> => {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('files', file);
+    });
     return apiClient.post('/log/client/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'

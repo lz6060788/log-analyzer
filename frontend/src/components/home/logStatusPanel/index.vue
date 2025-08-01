@@ -18,8 +18,9 @@ const startClientLogAnalyser =  () => {
 }
 const handleClientLogChange = async (e: Event) => {
   const target = e.target as HTMLInputElement
-  if (target.files) {
-    await initClientLogAnalyser(target.files[0])
+  if (target.files && target.files.length > 0) {
+    const files = Array.from(target.files)
+    await initClientLogAnalyser(files)
   }
   target.value = ''
 }
@@ -37,7 +38,7 @@ const handleClientLogChange = async (e: Event) => {
       }"
       @click="startClientLogAnalyser"
     >
-      <span class="text-gray-600">全量日志</span>
+      <span class="text-gray-600">全量日志（支持多文件）</span>
       <div
         class="flex items-center gap-4"
         :class="{
@@ -64,7 +65,7 @@ const handleClientLogChange = async (e: Event) => {
           <XCircleIcon class="size-6" />
         </template>
       </div>
-      <input ref="clientLogInputRef" type="file" name="clientlog" id="clientlog" class="hidden" @change="handleClientLogChange">
+      <input ref="clientLogInputRef" type="file" name="clientlog" id="clientlog" class="hidden" multiple accept=".log" @change="handleClientLogChange">
     </div>
   </div>
 </template>
