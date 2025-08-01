@@ -1,12 +1,20 @@
 import type { RespType } from '@/types/res';
 import apiClient from './axios';
 import type { AxiosResponse } from 'axios';
+import type { LogLine } from '@/types/client/log';
 
 const api = {
   uploadClientLog: (formData: FormData): Promise<RespType<null>> => {
     return apiClient.post('/log/client/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
+      }
+    });
+  },
+  filterLogList: (content: string): Promise<RespType<LogLine[]>> => {
+    return apiClient.get('/log/client/filter_log_list', {
+      params: {
+        content
       }
     });
   },
@@ -98,6 +106,46 @@ const api = {
   },
   getAlgorithmCode: (): Promise<RespType<any>> => {
     return apiClient.get(`/log/client/algorithm_code`);
+  },
+  getConditionSummaryData: (): Promise<RespType<any>> => {
+    return apiClient.get(`/log/client/condition_summary_data`);
+  },
+  getConditionInstanceDetailData: (order_no: string): Promise<RespType<any>> => {
+    return apiClient.get(`/log/client/condition_instance_detail_data`, {
+      params: {
+        order_no
+      }
+    });
+  },
+  getConditionOrderDetailData: (order_no: string): Promise<RespType<any>> => {
+    return apiClient.get(`/log/client/condition_order_detail_data`, {
+      params: {
+        order_no
+      }
+    });
+  },
+  getConditionSecurityOrderDetailData: (order_no: string, fund: string, security: string): Promise<RespType<any>> => {
+    return apiClient.get(`/log/client/condition_security_order_detail_data`, {
+      params: {
+        order_no,
+        fund,
+        security
+      }
+    });
+  },
+  getConditionInitReqsData: (order_no: string): Promise<RespType<any>> => {
+    return apiClient.get(`/log/client/condition_initreqs_data`, {
+      params: {
+        order_no
+      }
+    });
+  },
+  getConditionQueryData: (querytime: string): Promise<RespType<any>> => {
+    return apiClient.get(`/log/client/querycondition_data`, {
+      params: {
+        querytime
+      }
+    });
   }
 };
 

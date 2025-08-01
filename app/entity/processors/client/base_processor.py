@@ -11,7 +11,8 @@ from datetime import datetime
 
 from .models import (
     RequestPair, ProcessingConfig, ProcessingState, 
-    RequestPairsDict, FundTokenMapping, FundMapping
+    RequestPairsDict, FundTokenMapping, FundMapping,
+    LogLine
 )
 
 
@@ -95,14 +96,17 @@ class BaseProcessor:
         # 处理特殊日志行
         if "new_transmit_" in line:
             self.state.new_transmit_reqs.append(line)
+            self.state.log_list.append(LogLine(content=line, req_type="request", isNewTransmit=True))
             return ""
         elif "|timeout|" in line:
             self.state.timeout_reqs.append(line)
+            self.state.log_list.append(LogLine(content=line, req_type="request", isTimeout=True))
             return ""
         elif "|" not in line:
             self.state.skipped_reqs.append(line)
+            self.state.log_list.append(LogLine(content=line, req_type="request", isSkip=True))
             return ""
-        
+
         try:
             # 解析日志行基本信息
             parts = line.split('|')
@@ -110,6 +114,7 @@ class BaseProcessor:
             req_type = parts[2]
             log_level = parts[3]
             req_id = parts[4]
+            self.state.log_list.append(LogLine(content=line, req_type=req_type, req_id=req_id, time=req_time))
         except Exception as e:
             print(f"parse line error: {e}")
             return ""
@@ -129,13 +134,13 @@ class BaseProcessor:
     def _process_request_response(self, line: str, req_id: str, req_type: str, req_time: str) -> str:
         """
         处理请求响应对
-        
+
         Args:
             line: 日志行
             req_id: 请求ID
             req_type: 请求类型
             req_time: 请求时间
-            
+
         Returns:
             处理结果
         """
@@ -144,7 +149,7 @@ class BaseProcessor:
                 "request": "", "response": "", 
                 "req_time": "", "rsp_time": "", "protocol": ""
             }
-        
+
         try:
             # 解析请求/响应内容
             split_line = line.split(self.config.split_map[req_type])
@@ -155,15 +160,15 @@ class BaseProcessor:
 
             self.req_pairs[req_id][req_type] = req_json
             self.req_pairs[req_id][self.config.req_time_map[req_type]] = req_time
-            
+
             # 设置协议类型
             if req_type == "request":
                 self._set_protocol_type(req_id, line)
-            
+
             # 提取用户名
             if self.state.username == "":
                 self._extract_username(req_split, req_json)
-                
+
         except Exception as e:
             self.state.illegal_reqs.append({
                 "line": line,

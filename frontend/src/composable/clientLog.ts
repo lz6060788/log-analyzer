@@ -31,7 +31,9 @@ export const useClientLogAnalyser = () => {
     setBasketOrderDetail,
     setBasketQueryData,
     setAlgorithmQueryData,
-    setNewAlgorithmOrder
+    setNewAlgorithmOrder,
+    setConditionSummary,
+    setConditionQueryData
   } = clientStore;
 
   const initClientLogAnalyser = async (file: File) => {
@@ -51,6 +53,24 @@ export const useClientLogAnalyser = () => {
         setLogAnalyserStatus(LogAnalyserType.Client, LogAnalyserStatusType.Error)
         throw new Error(res.message)
       }
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const filterLogList = async (content: string) => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.filterLogList(content)
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      return res.data
     } catch (e: any) {
       ElNotification.error({
         title: 'Error',
@@ -484,9 +504,123 @@ export const useClientLogAnalyser = () => {
     return true
   }
 
+  const getConditionSummaryData = async () => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getConditionSummaryData()
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      setConditionSummary(res.data)
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getConditionInstanceDetailData = async (order_no: string) => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getConditionInstanceDetailData(order_no)
+      console.log(res, typeof res)
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getConditionOrderDetailData = async (order_no: string) => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getConditionOrderDetailData(order_no)
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getConditionSecurityOrderDetailData = async (order_no: string, fund: string, security: string) => {
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getConditionSecurityOrderDetailData(order_no, fund, security)
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getConditionInitReqsData = async (order_no: string) => {
+
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getConditionInitReqsData(order_no)
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
+  const getConditionQueryData = async (querytime: string) => {
+
+    if (!checkoutClientLogAnalyserStatus()) {
+      return;
+    }
+    try {
+      const res = await clientLogApi.getConditionQueryData(querytime)
+      if (res.code !== 0) {
+        throw new Error(res.message)
+      }
+      setConditionQueryData(res.data)
+      return res.data
+    } catch (e: any) {
+      ElNotification.error({
+        title: 'Error',
+        message: e.message,
+      })
+    }
+  }
+
   return {
     clientLogAnalyserStatus,
     initClientLogAnalyser,
+    filterLogList,
     getAccountsLogs,
     getStatisticData,
     getFundLogs,
@@ -508,6 +642,12 @@ export const useClientLogAnalyser = () => {
     getAlgorithmQueryData,
     getAlgorithmDetail,
     getAlgorithmPushDetail,
-    getAlgorithmCode
+    getAlgorithmCode,
+    getConditionSummaryData,
+    getConditionInstanceDetailData,
+    getConditionOrderDetailData,
+    getConditionSecurityOrderDetailData,
+    getConditionInitReqsData,
+    getConditionQueryData
   }
 }

@@ -13,7 +13,7 @@ from .fund_processor import FundProcessor
 from .position_processor import PositionProcessor
 from .order_processor import OrderProcessor
 from .trade_processor import TradeProcessor
-from .models import ProcessingState, RequestPairsDict
+from .models import LogLine, ProcessingState, RequestPairsDict
 from .ipo_processor import IPOProcessor
 from .basket_processor import BasketProcessor
 from .algorithm_processor import AlgorithmProcessor
@@ -100,6 +100,19 @@ class ClientProcessorNew:
 
         # 融资融券相关解析
         self.financing_processor.parse_financing_query()
+
+    def get_log_list(self) -> List[LogLine]:
+        """
+        获取日志列表
+        """
+        return self.state.log_list
+
+    def filter_log_list(self, content: List[str]) -> List[LogLine]:
+        """
+        过滤日志列表
+        """
+        subStrList = content.split("~")
+        return [log for log in self.state.log_list if any(subStr in log.content for subStr in subStrList)]
 
     def show_request_statics(self) -> List[Dict[str, Any]]:
         """
@@ -750,7 +763,7 @@ class ClientProcessorNew:
             条件单初始请求数据
         """
         return self.condition_processor.get_condition_initreqs_data(order_no)
-    def get_querycondition_data(self, querytime: str) -> Any:
+    def get_querycondition_data(self, querytime: str =  "") -> Any:
         """
         获取条件单查询数据
         

@@ -31,9 +31,20 @@ onMounted(() => {
       readOnly: props.readonly || false,
       automaticLayout: true,
       minimap: { enabled: false },
+      scrollBeyondLastLine: false,
+      fontSize: 14,
+      lineNumbers: 'on',
+      roundedSelection: false,
+      scrollbar: {
+        vertical: 'visible',
+        horizontal: 'visible'
+      }
     });
+    
     editor.onDidChangeModelContent(() => {
-      emit('update:modelValue', editor!.getValue());
+      if (editor) {
+        emit('update:modelValue', editor.getValue());
+      }
     });
   }
 });
@@ -45,7 +56,9 @@ watch(() => props.modelValue, (val) => {
 });
 
 onBeforeUnmount(() => {
-  editor?.dispose();
+  if (editor) {
+    editor.dispose();
+  }
 });
 </script>
 
@@ -58,4 +71,4 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
 }
-</style> 
+</style>

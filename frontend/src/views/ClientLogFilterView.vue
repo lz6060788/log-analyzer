@@ -9,6 +9,8 @@ import ipoPanel from '@/components/clientLogFilter/ipoPanel.vue';
 import finablePanel from '@/components/clientLogFilter/finablePanel.vue';
 import basketPanel from '@/components/clientLogFilter/basketPanel.vue';
 import algorithmPanel from '@/components/clientLogFilter/algorithmPanel.vue';
+import ConditionPanel from '@/components/clientLogFilter/conditionPanel.vue';
+import filterPanel from '@/components/clientLogFilter/filterPanel.vue';
 </script>
 
 <template>
@@ -22,5 +24,7 @@ import algorithmPanel from '@/components/clientLogFilter/algorithmPanel.vue';
   <finable-panel></finable-panel>
   <basket-panel></basket-panel>
   <algorithm-panel></algorithm-panel>
+  <condition-panel></condition-panel>
+  <filter-panel></filter-panel>
 </template>
 

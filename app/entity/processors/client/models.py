@@ -216,6 +216,21 @@ class AccountInfo:
     broker_id: str
     trade_type: str
 
+@dataclass
+class LogLine:
+    """日志行"""
+    content: str
+    req_id: str = ""
+    time: str = ""
+    req_type: str = ""
+    isError: bool = False
+    isTimeout: bool = False
+    isSkip: bool = False
+    isNewTransmit: bool = False
+    isResponseWithoutReqId: bool = False
+    isLinesWithoutReqId: bool = False
+    isSkippedReqPairs: bool = False
+
 
 # 类型别名定义
 RequestPairsDict = Dict[str, RequestPair]
@@ -307,3 +322,6 @@ class ProcessingState:
         self.gradecondition_push_instruction = []
         self.gradecondition_push_condition = []
         self.gradecondition_push_order = []
+
+        # 日志列表
+        self.log_list = []

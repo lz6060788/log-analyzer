@@ -26,6 +26,7 @@ class ConditionProcessor:
         """
         解析条件单相关数据，包括推送
         """
+        print("开始解析条件单数据...")
         self.gradecondition_create = []
         self.gradecondition_info = {}
         self.gradecondition_push = {}
@@ -33,6 +34,7 @@ class ConditionProcessor:
         self.query_gradecondition_df = {}
         # 1. 新建母单
         req_list = self.base_processor.get_request_list("json", "rpc.gradecondition", "create_gradecondition")
+        print(f"找到条件单创建请求数量: {len(req_list)}")
         for key in req_list:
             item = self.req_pairs[key]
             request = item["request"]
@@ -291,52 +293,177 @@ class ConditionProcessor:
         """
         获取条件单汇总结构化数据，适合web接口返回
         """
+        df_gradecondition_create = pd.DataFrame(self.gradecondition_create, columns=self.config.columns["gradecondition_create"])
+        df_gradecondition_create.rename(columns = {"algorithm_type":"algorithm", "start_monitor_time":"开始监控", "end_monitor_time":"结束监控"}, inplace=True)
+        df_gradecondition_create = df_gradecondition_create.sort_values(by='rsp_time', ascending=True).dropna(axis=1, how="all")
+
+        gradecondition_operations = []
+        for order_no, order_operations in self.gradecondition_info.items():
+            operations = order_operations["operations"]
+            for item in operations:
+                gradecondition_operations.append(item)
+        df_gradecondition_operations = pd.DataFrame(gradecondition_operations, columns=self.config.columns["gradecondition_operate"])
+        df_gradecondition_operations = df_gradecondition_operations.sort_values(by='rsp_time', ascending=True).dropna(axis=1, how="all")
+        if len(gradecondition_operations) > 0:
+            df_gradecondition_operations["action"] = df_gradecondition_operations["action"].apply(lambda x: x.split('_')[0])
         return {
-            "create": self.gradecondition_create,
-            "info": self.gradecondition_info,
-            "push": self.gradecondition_push
+            "create": df_gradecondition_create.where(pd.notna(df_gradecondition_create), None).to_dict(orient="records"),
+            "info": df_gradecondition_operations.where(pd.notna(df_gradecondition_operations), None).to_dict(orient="records"),
+            "instruction_push_length": len(self.state.gradecondition_push_instruction),
+            "condition_push_length": len(self.state.gradecondition_push_condition),
+            "order_push_length": len(self.state.gradecondition_push_order)
         }
 
     def get_condition_instance_detail_data(self, order_no: str) -> Dict[str, Any]:
         """
         获取指定母单详情结构化数据，包含推送明细，适合web接口返回
         """
-        info = self.gradecondition_info.get(order_no, {})
-        push = self.gradecondition_push.get(order_no, {})
-        return {
-            "info": info,
-            "push": push
-        }
+        result = {
+            "list_the_create": [],
+            "df_gradecondition_operations": [],
+            "modify_information": [],
+            "gradecondition_stocks": [],
+            "condition_list": [],
+            "df_gradecondition_detail": [],
+            "df_gradecondition_first_push": {},
+            "df_gradecondition_push_instruction": [],
+        };
+        if order_no not in self.gradecondition_info:
+            raise ValueError(f"母单[{order_no}]不在母单列表中")
+        else:
+            the_create = next((item for item in self.gradecondition_create if item["order_no"] == order_no), None)
+            list_the_create = []
+            def get_key_note(key):
+                note = ""
+                dict_key_2_note = {
+                    "order_from":"订单来源",
+                    "start_monitor_time":"开始监控时间",
+                    "end_monitor_time":"结束监控时间",
+                    "trade_interval_time":"交易时间间隔",
+                    "basket_name":"篮子名称",
+                    "distribute_type":"分配方式",
+                    "algorithm_type":"订单算法",
+                    "max_trigger_stock":"最大触发数",
+                    "rz_priority_flag":"融资优先开关",
+                    "splite_order":"拆单规则",
+                    "pause_type":"暂停类型",
+                }
+                if key in dict_key_2_note:
+                    return dict_key_2_note[key]
+                return note
+            if the_create:
+                for key, value in the_create.items():
+                    value_format = value
+                    if key == "note":
+                        result["condition_text"] = value
+                    if type(value) in (dict, list):
+                        value_format = f"valuetype is {str(type(value))}, len={len(value)}"
+                    list_the_create.append({"请求字段": key, "字段解释": get_key_note(key), "值": value_format})
+            result["list_the_create"] = list_the_create
+            # 母单操作
+            operations = self.gradecondition_info[order_no]["operations"]
+            df_gradecondition_operations = pd.DataFrame(operations, columns=self.config.columns["gradecondition_operate"])
+            df_gradecondition_operations = df_gradecondition_operations.sort_values(by='rsp_time', ascending=True).dropna(axis=1, how="all")
+            if len(operations) > 0:
+                df_gradecondition_operations["action"] = df_gradecondition_operations["action"].apply(lambda x: x.split('_')[0])
+            # 处理NaN值，转换为None
+            df_gradecondition_operations_clean = df_gradecondition_operations.where(pd.notna(df_gradecondition_operations), None)
+            result["df_gradecondition_operations"] = df_gradecondition_operations_clean.to_dict(orient="records")
+
+            # 母单改单前后对比
+            modify_information = []
+            if the_create:
+                modify_information.append(the_create)
+            for operation in operations:
+                action = operation.get("action", "")
+                req_id = operation.get("id", "")
+                if action == "modify_gradecondition" and req_id in self.req_pairs:
+                    the_modify = self.req_pairs[req_id]["request"]["params"]
+                    rsp_time = self.req_pairs[req_id]["rsp_time"]
+                    the_modify["rsp_time"] = rsp_time
+                    modify_information.append(the_modify)
+            if len(modify_information) > 1:
+                df = pd.DataFrame(modify_information, columns=["rsp_time", "action", "start_monitor_time", "end_monitor_time", "note"])
+                # 处理NaN值，转换为None
+                df_clean = df.where(pd.notna(df), None)
+                result["modify_information"] = df_clean.to_dict(orient="records")
+            # 母单关联股票信息
+            detail_params = self.gradecondition_info[order_no]["instruction_params"]
+            if detail_params:
+                df_gradecondition_detail = pd.DataFrame(detail_params, columns=self.config.columns["gradecondition_create_detail"])
+                gradecondition_stocks = list(set(df_gradecondition_detail["symbol"].tolist()))
+                result["gradecondition_stocks"] = gradecondition_stocks
+                if "condition" in df_gradecondition_detail:
+                    condition_list = set(df_gradecondition_detail["condition"].to_list())
+                    result["condition_list"] = list(condition_list)
+                # 处理NaN值，转换为None
+                df_gradecondition_detail_clean = df_gradecondition_detail.where(pd.notna(df_gradecondition_detail), None)
+                result["df_gradecondition_detail"] = df_gradecondition_detail_clean.to_dict(orient="records")
+            # 母单推送详情
+            if order_no not in self.gradecondition_push.keys():
+                result["df_gradecondition_first_push"] = {}
+                result["df_gradecondition_push_instruction"] = []
+            else:
+                pushdata = self.gradecondition_push[order_no]["grade_instruction"]
+                if pushdata:
+                    result["df_gradecondition_first_push"] = pushdata[0]
+                    df_gradecondition_push_instruction = pd.DataFrame(pushdata, columns=self.config.columns["gradecondition_push_instruction"])
+                    # 处理NaN值，转换为None
+                    df_gradecondition_push_instruction_clean = df_gradecondition_push_instruction.where(pd.notna(df_gradecondition_push_instruction), None)
+                    result["df_gradecondition_push_instruction"] = df_gradecondition_push_instruction_clean.to_dict(orient="records")
+        print(f"返回数据类型: {type(result)}")
+        print(f"返回数据内容: {result}")
+        return result
 
     def get_condition_order_detail_data(self, order_no: str) -> Dict[str, Any]:
         """
         获取母单子单推送结构化数据，包含子单状态和推送明细，适合web接口返回
         """
         if order_no not in self.gradecondition_push:
-            return {"status": [], "push_detail": {}}
+            raise ValueError(f"母单[{order_no}]不在母单列表中")
+        result = {
+            "condition_list": [],
+            "df_grade_condition": [],
+        };
         push_condition = []
         grade_conditions = self.gradecondition_push[order_no].get("grade_condition", {})
         for symbol, condition in grade_conditions.items():
             push_condition.append(condition[-1])
-        grade_order = self.gradecondition_push[order_no].get("grade_order", {})
-        return {
-            "status": push_condition,
-            "push_detail": grade_order
-        }
+        df_grade_condition = pd.DataFrame(push_condition, columns=self.config.columns["gradecondition_push_condition"])
+        if "condition" in df_grade_condition:
+            condition_list = set(df_grade_condition["condition"].to_list())
+            result["condition_list"] = list(condition_list)
+        # 处理NaN值，转换为None
+        df_grade_condition_clean = df_grade_condition.where(pd.notna(df_grade_condition), None)
+        result["df_grade_condition"] = df_grade_condition_clean.to_dict(orient="records")
+        return result
 
     def get_condition_security_order_detail_data(self, order_no: str, fund: str, security: str) -> Dict[str, Any]:
         """
         获取母单下指定证券的子单推送结构化数据，包含推送明细和错误信息，适合web接口返回
         """
-        if order_no not in self.gradecondition_push:
-            return {"push_detail": [], "error_msgs": []}
-        grade_order = self.gradecondition_push[order_no].get("grade_order", {})
-        pushdata = grade_order.get(security, [])
-        error_msgs = [item["Text"] for item in pushdata if "Text" in item]
-        return {
-            "push_detail": pushdata,
-            "error_msgs": list(set(error_msgs))
-        }
+        if order_no not in self.gradecondition_push.keys():
+            raise ValueError(f"母单id: {order_no} 没有子单推送")
+        result = {
+            "condition_params": {},
+            "df_gradecondition_push_order": [],
+            "error_msgs": [],
+        };
+        grade_condition = self.gradecondition_push[order_no].get("grade_condition", {})
+        if security not in grade_condition:
+            return result
+        else:
+            condition_params = next((item for item in self.gradecondition_info[order_no]["instruction_params"] if item["symbol"] == security), None)
+            result["condition_params"] = condition_params
+            pushdata = self.gradecondition_push[order_no]["grade_order"].get(security, [])
+            df = pd.DataFrame(pushdata, columns=self.config.columns["gradecondition_push_order"])
+            if "Text" in df:
+                msg_list = [item["Text"] for item in pushdata]
+                result["error_msgs"] = list(set(msg_list))
+            # 处理NaN值，转换为None
+            df_clean = df.where(pd.notna(df), None)
+            result["df_gradecondition_push_order"] = df_clean.to_dict(orient="records")
+        return result
 
     def get_condition_initreqs_data(self, order_no: str) -> Any:
         """
@@ -351,11 +478,22 @@ class ConditionProcessor:
             return self.req_pairs[req_id]
         return None
 
-    def get_querycondition_data(self, querytime: str) -> Any:
+    def get_querycondition_data(self, querytime: str =  None) -> Any:
         """
         获取条件单查询结构化数据，适合web接口返回
         """
-        df_query_condition = self.query_gradecondition_df.get(querytime, None)
-        if isinstance(df_query_condition, pd.DataFrame):
-            return df_query_condition.to_dict(orient="records")
-        return None 
+        print(self.query_gradecondition_df)
+        print(querytime)
+        if querytime == None or querytime == "":
+            # 将DataFrame转换为可序列化的格式
+            if isinstance(self.query_gradecondition_df, dict):
+                            return {k: v.where(pd.notna(v), None).to_dict(orient="records") if isinstance(v, pd.DataFrame) else v 
+                   for k, v in self.query_gradecondition_df.items()}
+            return []
+        else:
+            df_query_condition = self.query_gradecondition_df.get(querytime, pd.DataFrame())
+            if isinstance(df_query_condition, pd.DataFrame):
+                # 处理NaN值，转换为None
+                df_query_condition_clean = df_query_condition.where(pd.notna(df_query_condition), None)
+                return df_query_condition_clean.to_dict(orient="records")
+            return []

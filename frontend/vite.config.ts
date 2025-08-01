@@ -6,6 +6,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+import monacoEditorPlugin from 'vite-plugin-monaco-editor-esm'
 
 import UnoCSS from 'unocss/vite'
 
@@ -20,7 +21,8 @@ export default defineConfig({
     Components({
       resolvers: [ElementPlusResolver()],
     }),
-    UnoCSS()
+    UnoCSS(),
+    monacoEditorPlugin({})
   ],
   resolve: {
     alias: {

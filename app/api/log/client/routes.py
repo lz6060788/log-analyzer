@@ -76,6 +76,16 @@ def upload_file():
         print(traceback.format_exc())
         return None, -1, f'处理失败: {str(e)}'
 
+@client_bp.route('/filter_log_list', methods=['GET'])
+@standard_json_response
+def filter_log_list():
+    clientreq = session.get('clientPropcessor')
+    if clientreq:
+        content = request.args.get('content')
+        return clientreq.filter_log_list(content)
+    else:
+        return None, -1, '请先上传文件'
+
 @client_bp.route('/query_fetch_statistics', methods=['GET'])
 @standard_json_response
 def query_fetch_statistics():
@@ -330,54 +340,59 @@ def get_condition_summary_data():
     else:
         return None, -1, '请先上传文件'
 
-@client_bp.route('/condition_instance_detail_data/<order_no>', methods=['GET'])
+@client_bp.route('/condition_instance_detail_data', methods=['GET'])
 @standard_json_response
-def get_condition_instance_detail_data(order_no):
+def get_condition_instance_detail_data():
     """获取条件单实例明细数据"""
     clientreq = session.get('clientPropcessor')
     if clientreq:
+        order_no = request.args.get('order_no')
         return clientreq.get_condition_instance_detail_data(order_no)
     else:
         return None, -1, '请先上传文件'
 
-@client_bp.route('/condition_order_detail_data/<order_no>', methods=['GET'])
+@client_bp.route('/condition_order_detail_data', methods=['GET'])
 @standard_json_response
-def get_condition_order_detail_data(order_no):
+def get_condition_order_detail_data():
     """获取条件单母单操作明细数据"""
     clientreq = session.get('clientPropcessor')
     if clientreq:
+        order_no = request.args.get('order_no')
         return clientreq.get_condition_order_detail_data(order_no)
     else:
         return None, -1, '请先上传文件'
 
-@client_bp.route('/condition_security_order_detail_data/<order_no>', methods=['GET'])
+@client_bp.route('/condition_security_order_detail_data', methods=['GET'])
 @standard_json_response
-def get_condition_security_order_detail_data(order_no):
+def get_condition_security_order_detail_data():
     """获取条件单证券操作明细数据"""
     clientreq = session.get('clientPropcessor')
     if clientreq:
         fund = request.args.get('fund', '')
         security = request.args.get('security', '')
+        order_no = request.args.get('order_no')
         return clientreq.get_condition_security_order_detail_data(order_no, fund, security)
     else:
         return None, -1, '请先上传文件'
 
-@client_bp.route('/condition_initreqs_data/<order_no>', methods=['GET'])
+@client_bp.route('/condition_initreqs_data', methods=['GET'])
 @standard_json_response
-def get_condition_initreqs_data(order_no):
+def get_condition_initreqs_data():
     """获取条件单初始请求数据"""
     clientreq = session.get('clientPropcessor')
     if clientreq:
+        order_no = request.args.get('order_no')
         return clientreq.get_condition_initreqs_data(order_no)
     else:
         return None, -1, '请先上传文件'
 
-@client_bp.route('/querycondition_data/<querytime>', methods=['GET'])
+@client_bp.route('/querycondition_data', methods=['GET'])
 @standard_json_response
-def get_querycondition_data(querytime):
+def get_querycondition_data():
     """获取条件单查询数据"""
     clientreq = session.get('clientPropcessor')
     if clientreq:
+        querytime = request.args.get('querytime')
         return clientreq.get_querycondition_data(querytime)
     else:
         return None, -1, '请先上传文件'

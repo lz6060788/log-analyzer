@@ -87,6 +87,16 @@ export const useClientLogStore = defineStore('clientLog', () => {
     algorithmQueryData.value = data
   }
 
+  const conditionSummary = ref<any>({});
+  const setConditionSummary = (data: any) => {
+    conditionSummary.value = data
+  }
+
+  const conditionQueryData = ref<any>({});
+  const setConditionQueryData = (data: any) => {
+    conditionQueryData.value = data
+  }
+
   return {
     fetchStatisticList,
     setFetchStatisticList,
@@ -121,6 +131,10 @@ export const useClientLogStore = defineStore('clientLog', () => {
     algorithmQueryData,
     setAlgorithmQueryData,
     newAlgorithmOrder,
-    setNewAlgorithmOrder
+    setNewAlgorithmOrder,
+    conditionSummary,
+    setConditionSummary,
+    conditionQueryData,
+    setConditionQueryData
   }
 })
