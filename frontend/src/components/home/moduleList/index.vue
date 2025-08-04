@@ -14,7 +14,7 @@
       ]"
       @click="jumpToPath(item)"
     >
-      <div 
+      <div
         class="absolute inset-0 opacity-80"
         :class="{
           'bg-gradient-to-br from-blue-100 via-transparent to-purple-100': item.color === 'blue-purple',
@@ -59,9 +59,10 @@ const modules = ref<ModuleItem[]>([
     path: '/log-paste',
   },
   {
-    title: '功能 3',
-    description: '这是第三个功能的描述',
-    color: 'amber-pink'
+    title: '日志池查看',
+    description: '查看日志池中的日志内容，支持多项过滤功能，目前已适配主要接口，支持导出日志内容',
+    color: 'amber-pink',
+    path: '/log-pool',
   },
   {
     title: '功能 4',

@@ -1,13 +1,15 @@
 <template>
-  <el-dialog v-model="visible" title="JSON查看" width="60%" @close="onClose">
-    <monaco-editor
-      v-if="visible"
-      v-model="jsonText"
-      language="json"
-      :readonly="true"
-      height="400px"
-    />
-  </el-dialog>
+  <Teleport to="body">
+    <el-dialog v-model="visible" title="JSON查看" width="60%" @close="onClose">
+      <monaco-editor
+        v-if="visible"
+        v-model="jsonText"
+        language="json"
+        :readonly="true"
+        height="400px"
+      />
+    </el-dialog>
+  </Teleport>
 </template>
 
 <script setup lang="ts">

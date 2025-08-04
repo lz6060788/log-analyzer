@@ -89,7 +89,10 @@ def filter_log_list():
     clientreq = session.get('clientPropcessor')
     if clientreq:
         content = request.args.get('content')
-        return clientreq.filter_log_list(content)
+        if content:
+            return clientreq.filter_log_list(content)
+        else:
+            return clientreq.get_log_list()
     else:
         return None, -1, '请先上传文件'
 
@@ -110,7 +113,7 @@ def query_accounts_logs():
         return clientreq.account_processor.query_accounts_df
     else:
         return None, -1, '请先上传文件'
-    
+
 @client_bp.route('/query_fund_logs', methods=['GET'])
 @standard_json_response
 def query_funds_data():

@@ -1,9 +1,9 @@
 <template>
   <div class="log-paste-view">
     <p class="mb-2 text-gray-600">在此处粘贴日志内容，下方表格会进行解析并美化json内容</p>
-    <MonacoEditor v-model="logText" height="400px" language="plaintext" />
+    <MonacoEditor v-model="logText" height="400px" language="client-log" theme="client-log-theme" :readonly="true" />
     <div class="log-list">
-      <div style="overflow-x: auto;">
+      <div class="w-full">
         <el-table :data="tableData" style="min-width: 800px; width: 100%" :default-sort="{prop: tableHeaders[0], order: 'ascending'}" border>
           <el-table-column v-if="hasAnyJson" label="操作" fixed="left" width="100">
             <template #default="{ row }">
@@ -15,7 +15,7 @@
               <copyText v-if="row.uuid" :text="row.uuid" />
             </template>
           </el-table-column>
-          <el-table-column v-if="hasAnyMethod" label="Method" fixed="left" width="200">
+          <el-table-column v-if="hasAnyMethod" label="Method" fixed="left" width="160">
             <template #default="{ row }">
               <copyText v-if="row.method" :text="row.method" />
             </template>
@@ -29,6 +29,7 @@
             :filters="header.filters"
             :filter-method="header.filterMethod"
             show-overflow-tooltip
+            :width="200"
           >
             <template #default="{ row }">
               <div class="cell-ellipsis" :class="{highlight: row[header.prop + '_highlight']}" >{{ row[header.prop] }}</div>
@@ -48,7 +49,11 @@ import JsonViewerDialog from '../components/common/JsonViewerDialog.vue';
 import { parseClientLogLines } from '../composable/clientLogParser';
 import copyText from '../components/common/copyText.vue';
 
-const logText = ref('');
+const props = defineProps<{
+  logText?: string;
+}>();
+
+const logText = ref(props.logText || '');
 const parsedLogs = computed(() => parseClientLogLines(logText.value));
 
 // 生成表头及筛选项
@@ -116,4 +121,4 @@ function showJson(json: string | undefined) {
   color: #d97706;
   font-weight: bold;
 }
-</style> 
+</style>

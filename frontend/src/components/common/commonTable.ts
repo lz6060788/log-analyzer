@@ -48,6 +48,7 @@ export default defineComponent({
           maxHeight: '750px',
           border: true,
           stripe: true,
+          fit: true,
           size: 'small'
         }, () => [
           ...columns.value.map((key) => {
@@ -55,7 +56,8 @@ export default defineComponent({
               key,
               prop: key,
               label: key.charAt(0).toUpperCase() + key.slice(1),
-              showOverflowTooltip: true,
+              minWidth: '80px',
+              // showOverflowTooltip: true,
             }, {
               default: (scope: any) => slots[key] ? slots[key](scope) : scope.row[key]
             });

@@ -220,6 +220,7 @@ class AccountInfo:
 class LogLine:
     """日志行"""
     content: str
+    type: str = "client"
     req_id: str = ""
     time: str = ""
     req_type: str = ""

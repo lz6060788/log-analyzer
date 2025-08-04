@@ -1,4 +1,4 @@
-export type LogLine = {
+export type ClientLogLine = {
   content: string;
   req_id: string;
   time: string;

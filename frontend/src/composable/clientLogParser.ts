@@ -81,4 +81,4 @@ export function parseClientLogLine(line: string): ParsedLogLine {
     uuid,
     method,
   };
-} 
+}
