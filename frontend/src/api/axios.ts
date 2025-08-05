@@ -1,7 +1,16 @@
 import axios from 'axios';
 
+// 根据环境变量设置基础URL
+const getBaseURL = () => {
+  if (import.meta.env.DEV) {
+    return '/api'; // 开发环境
+  } else {
+    return '/'; // 生产环境
+  }
+};
+
 const apiClient = axios.create({
-  baseURL: '/api', // 从环境变量获取基础URL
+  baseURL: getBaseURL(),
   timeout: 30 * 1000, // 超时时间
   headers: {
     'Content-Type': 'application/json',
