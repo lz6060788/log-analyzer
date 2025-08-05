@@ -12,6 +12,7 @@ import UnoCSS from 'unocss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/static/',
   build: {
     outDir: '../static/',
   },
