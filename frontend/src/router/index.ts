@@ -1,9 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import DefaultLayout from '@/layout/default.vue'
 import HomeView from '@/views/HomeView.vue'
-import ClilentLogFilterView from '@/views/ClientLogFilterView.vue'
-import LogPasteView from '../views/LogPasteView.vue';
-import LogPoolView from '../views/LogPoolView.vue';
+// @ts-ignore
+import ClientLogFilterView from '@/views/ClientLogFilterView.vue'
+// @ts-ignore
+import LogPasteView from '@/views/LogPasteView.vue'
+// @ts-ignore
+import LogPoolView from '@/views/LogPoolView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,7 +24,7 @@ const router = createRouter({
         {
           path: '/clientLogFilter',
           name: 'clientLogFilter',
-          component: ClilentLogFilterView,
+          component: ClientLogFilterView,
         },
         {
           path: '/log-paste',

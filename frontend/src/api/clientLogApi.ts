@@ -14,7 +14,7 @@ const api = {
       }
     });
   },
-  filterLogList: (content: string): Promise<RespType<ClientLogLine[]>> => {
+  filterLogList: (content?: string): Promise<RespType<ClientLogLine[]>> => {
     return apiClient.get('/log/client/filter_log_list', {
       params: {
         content

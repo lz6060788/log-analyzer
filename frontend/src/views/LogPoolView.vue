@@ -47,7 +47,7 @@
     </div>
 
     <!-- 主要内容区域 -->
-    <div class="flex h-[calc(100vh-80px)]" :class="{ 'h-[calc(100vh-80px)]': !isFullscreen, 'h-[calc(100vh-80px)]': isFullscreen }">
+    <div class="flex h-[calc(100vh-80px)]" :class="{ 'h-screen': isFullscreen }">
       <!-- 左侧编辑器区域 -->
       <div class="w-[calc(100%-320px)] bg-white" :class="{ 'w-full': isFullscreen }">
         <MonacoEditor
@@ -234,9 +234,9 @@ const visibleLines = computed(() => {
 // 查询
 const clientLogList = ref<any[]>([])
 const operationLogList = ref<any[]>([])
-const fetchLogContent = async (): Promise<string> => {
-  clientLogList.value = await filterClientLogList()
-  operationLogList.value = await filterOperationLogList()
+const fetchLogContent = async (): Promise<void> => {
+  clientLogList.value = await filterClientLogList() || []
+  operationLogList.value = await filterOperationLogList() || []
 }
 
 const totalLogList = computed(() => {
@@ -309,7 +309,7 @@ const exportLogs = () => {
     return
   }
 
-  const blob = new Blob([logContent.value.join('\n')], { type: 'text/plain' })
+  const blob = new Blob([logContent.value], { type: 'text/plain' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url

@@ -35,7 +35,7 @@ export const useOperationLogAnalyser = () => {
     }
   }
 
-  const filterLogList = async (content: string) => {
+  const filterLogList = async (content?: string) => {
     if (!checkoutOperationLogAnalyserStatus()) {
       return [];
     }

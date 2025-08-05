@@ -59,7 +59,7 @@ export const useClientLogAnalyser = () => {
     }
   }
 
-  const filterLogList = async (content: string) => {
+  const filterLogList = async (content?: string) => {
     if (!checkoutClientLogAnalyserStatus()) {
       return;
     }

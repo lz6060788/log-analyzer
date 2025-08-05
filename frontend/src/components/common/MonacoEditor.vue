@@ -160,7 +160,7 @@ onMounted(() => {
     // 监听滚动事件
     editor.onDidScrollChange((e) => {
       // 获取编辑器的视口高度
-      const viewportHeight = editor.getLayoutInfo().height;
+      const viewportHeight = editor!.getLayoutInfo().height;
 
       emit('scroll', {
         target: {
