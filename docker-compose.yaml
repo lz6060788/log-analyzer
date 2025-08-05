@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  log-analyzer:
+    build: .
+    container_name: log-analyzer-app
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./app:/app/app
+      - ./templates:/app/templates
+      - ./static:/app/static
+      - flask_session:/app/flask_session
+    environment:
+      - FLASK_APP=app/app.py
+      - FLASK_ENV=development
+      - PYTHONPATH=/app
+    restart: unless-stopped
+    networks:
+      - log-analyzer-network
+
+volumes:
+  flask_session:
+    driver: local
+
+networks:
+  log-analyzer-network:
+    driver: bridge

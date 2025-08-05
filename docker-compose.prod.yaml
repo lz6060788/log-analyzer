@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  log-analyzer:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: log-analyzer-app-prod
+    ports:
+      - "5000:5000"
+    # volumes:
+    #   - flask_session:/app/flask_session
+    environment:
+      - FLASK_APP=app/app.py
+      - FLASK_ENV=production
+      - PYTHONPATH=/app
+    restart: unless-stopped
+    networks:
+      - log-analyzer-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+
+# volumes:
+#   flask_session:
+#     driver: local
+
+networks:
+  log-analyzer-network:
+    driver: bridge 
