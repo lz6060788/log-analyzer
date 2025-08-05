@@ -10,6 +10,10 @@ ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=app/app.py
 ENV FLASK_ENV=production
 
+# 替换apt源为阿里云镜像
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+    sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list
+
 # 安装系统依赖
 RUN apt-get update && apt-get install -y \
     gcc \
@@ -18,9 +22,9 @@ RUN apt-get update && apt-get install -y \
 # 复制requirements.txt文件
 COPY requirements.txt .
 
-# 安装Python依赖
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir gunicorn
+# 替换pip源为阿里云镜像并安装Python依赖
+RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com -r requirements.txt
+RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com gunicorn
 
 # 复制应用代码
 COPY app/ ./app/
