@@ -13,7 +13,7 @@ services:
     environment:
       - FLASK_APP=app/app.py
       - FLASK_ENV=production
-      - PYTHONPATH=/app
+      - PYTHONPATH=/app:/app/app
     restart: unless-stopped
     networks:
       - log-analyzer-network
