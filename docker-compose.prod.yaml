@@ -30,4 +30,4 @@ services:
 
 networks:
   log-analyzer-network:
-    driver: bridge 
+    driver: bridge

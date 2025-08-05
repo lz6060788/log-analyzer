@@ -1,7 +1,7 @@
-from flask import Flask, render_template, session
+from flask import Flask, render_template, session, jsonify
 from flask_session import Session
-from api.log.routes import log_bp
-from utils.request import CustomJSONEncoder
+from .api.log.routes import log_bp
+from .utils.request import CustomJSONEncoder
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 # 配置Session
@@ -14,6 +14,11 @@ app.config['SESSION_KEY_PREFIX'] = 'log:'  # 存储键的前缀
 app.json_encoder = CustomJSONEncoder
 
 Session(app)
+
+# 健康检查路由
+@app.route('/readiness')
+def health_check():
+    return jsonify({'status': 'healthy', 'message': 'Log Analyzer is running'})
 
 # 路由配置
 app.register_blueprint(log_bp)
