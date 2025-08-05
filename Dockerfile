@@ -11,8 +11,10 @@ ENV FLASK_APP=app/app.py
 ENV FLASK_ENV=production
 
 # 替换apt源为阿里云镜像
-RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
-    sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list
+RUN echo "deb http://mirrors.aliyun.com/debian bookworm main" > /etc/apt/sources.list && \
+    echo "deb http://mirrors.aliyun.com/debian bookworm-updates main" >> /etc/apt/sources.list && \
+    echo "deb http://mirrors.aliyun.com/debian-security bookworm-security main" >> /etc/apt/sources.list && \
+    rm -f /etc/apt/sources.list.d/*
 
 # 安装系统依赖
 RUN apt-get update && apt-get install -y \

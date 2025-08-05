@@ -1,7 +1,7 @@
 from flask import Flask, render_template, session, jsonify
 from flask_session import Session
-from .api.log.routes import log_bp
-from .utils.request import CustomJSONEncoder
+from api.log.routes import log_bp
+from utils.request import CustomJSONEncoder
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 # 配置Session
