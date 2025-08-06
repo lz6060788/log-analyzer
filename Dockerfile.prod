@@ -1,5 +1,5 @@
 # 使用Python 3.11官方镜像作为基础镜像
-FROM python:3.11-slim
+FROM hub-dev.hexin.cn:9544/business-baseimage-python/python:v3.11.12
 
 # 设置工作目录
 WORKDIR /app
@@ -11,12 +11,6 @@ ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
 ENV PYTHONPATH=/app:/app/app
 
-# 替换apt源为阿里云镜像
-RUN echo "deb http://mirrors.aliyun.com/debian bookworm main" > /etc/apt/sources.list && \
-    echo "deb http://mirrors.aliyun.com/debian bookworm-updates main" >> /etc/apt/sources.list && \
-    echo "deb http://mirrors.aliyun.com/debian-security bookworm-security main" >> /etc/apt/sources.list && \
-    rm -f /etc/apt/sources.list.d/*
-
 # 安装系统依赖
 RUN apt-get update && apt-get install -y \
     gcc \
@@ -26,8 +20,8 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 
 # 替换pip源为阿里云镜像并安装Python依赖
-RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com -r requirements.txt
-RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com gunicorn
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir gunicorn
 
 # 复制应用代码
 COPY app/ ./app/
@@ -46,4 +40,4 @@ USER appuser
 EXPOSE 5000
 
 # 使用Gunicorn启动应用
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--timeout", "60", "--preload", "app.app:app"] 
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "60", "--preload", "app.app:app"] 
