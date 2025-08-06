@@ -35,12 +35,12 @@ export const useOperationLogAnalyser = () => {
     }
   }
 
-  const filterLogList = async (content?: string) => {
+  const filterLogList = async (data?: {content?: string, startTime?: string, endTime?: string}) => {
     if (!checkoutOperationLogAnalyserStatus()) {
       return [];
     }
     try {
-      const res = await operationLogApi.filterLogList(content)
+      const res = await operationLogApi.filterLogList(data)
       if (res.code !== 0) {
         throw new Error(res.message)
       }

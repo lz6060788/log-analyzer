@@ -6,13 +6,14 @@
 import json
 import traceback
 import re
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union, Tuple
 from datetime import datetime
 
 from .models import (
     RequestPair, ProcessingConfig, ProcessingState, 
     RequestPairsDict, FundTokenMapping, FundMapping,
-    LogLine
+    ParsedRequestResponseList, ParsedPushDataList,
+    ParsedRequestResponse, ParsedPushData
 )
 
 
@@ -96,15 +97,12 @@ class BaseProcessor:
         # 处理特殊日志行
         if "new_transmit_" in line:
             self.state.new_transmit_reqs.append(line)
-            self.state.log_list.append(LogLine(content=line, req_type="request", isNewTransmit=True))
             return ""
         elif "|timeout|" in line:
             self.state.timeout_reqs.append(line)
-            self.state.log_list.append(LogLine(content=line, req_type="request", isTimeout=True))
             return ""
         elif "|" not in line:
             self.state.skipped_reqs.append(line)
-            self.state.log_list.append(LogLine(content=line, req_type="request", isSkip=True))
             return ""
 
         try:
@@ -114,7 +112,6 @@ class BaseProcessor:
             req_type = parts[2]
             log_level = parts[3]
             req_id = parts[4]
-            self.state.log_list.append(LogLine(content=line, req_type=req_type, req_id=req_id, time=req_time))
         except Exception as e:
             print(f"parse line error: {e}")
             return ""
@@ -489,3 +486,253 @@ class BaseProcessor:
             if not rsp_time in rsp_query_data.keys():
                 rsp_query_data[rsp_time] = raw_querydata
         return rsp_query_data
+
+    def parse_and_split_request_pairs(self) -> Tuple[ParsedRequestResponseList, ParsedRequestResponseList]:
+        """
+        将请求问答对拆分为独立的请求数组和响应数组
+        
+        Returns:
+            (requests, responses) 元组，包含请求记录列表和响应记录列表
+        """
+        requests = []
+        responses = []
+        
+        for req_id, item in self.req_pairs.items():
+            request = item.get("request", {})
+            response = item.get("response", {})
+            req_time = item.get("req_time", "")
+            rsp_time = item.get("rsp_time", "")
+            protocol = item.get("protocol", "")
+            
+            # 解析servicename和action
+            servicename, action = self._parse_servicename_and_action(request, protocol)
+            
+            # 创建请求记录
+            if request:
+                requests.append(ParsedRequestResponse(
+                    id=req_id,
+                    content=json.dumps(request, ensure_ascii=False),
+                    time=req_time,
+                    servicename=servicename,
+                    action=action,
+                    record_type="request",
+                    protocol=protocol
+                ))
+            
+            # 创建响应记录
+            if response:
+                responses.append(ParsedRequestResponse(
+                    id=req_id,
+                    content=json.dumps(response, ensure_ascii=False),
+                    time=rsp_time,
+                    servicename=servicename,
+                    action=action,
+                    record_type="response",
+                    protocol=protocol
+                ))
+        
+        return requests, responses
+
+    def parse_push_data(self) -> ParsedPushDataList:
+        """
+        解析推送数据和response_without_reqid，转换为统一的数据结构
+        
+        Returns:
+            解析后的推送数据列表
+        """
+        push_data = []
+        
+        # 解析篮子订单推送
+        for req_time, request_str in self.state.basketorder_push_raw:
+            try:
+                push_data.append(ParsedPushData(
+                    content=request_str,
+                    time=req_time,
+                    push_type="basket_order_push"
+                ))
+            except Exception as e:
+                print(f"解析篮子订单推送失败: {e}")
+        
+        # 解析算法推送
+        for req_time, request_str in self.state.algorithm_push_raw:
+            try:
+                push_data.append(ParsedPushData(
+                    content=request_str,
+                    time=req_time,
+                    push_type="algorithm_push"
+                ))
+            except Exception as e:
+                print(f"解析算法推送失败: {e}")
+        
+        # 解析条件推送指令
+        for req_time, request_str in self.state.gradecondition_push_instruction:
+            try:
+                push_data.append(ParsedPushData(
+                    content=request_str,
+                    time=req_time,
+                    push_type="gradecondition_push_instruction"
+                ))
+            except Exception as e:
+                print(f"解析条件推送指令失败: {e}")
+        
+        # 解析条件推送条件
+        for req_time, request_str in self.state.gradecondition_push_condition:
+            try:
+                push_data.append(ParsedPushData(
+                    content=request_str,
+                    time=req_time,
+                    push_type="gradecondition_push_condition"
+                ))
+            except Exception as e:
+                print(f"解析条件推送条件失败: {e}")
+        
+        # 解析条件推送订单
+        for req_time, request_str in self.state.gradecondition_push_order:
+            try:
+                push_data.append(ParsedPushData(
+                    content=request_str,
+                    time=req_time,
+                    push_type="gradecondition_push_order"
+                ))
+            except Exception as e:
+                print(f"解析条件推送订单失败: {e}")
+        
+        # 解析无请求ID的响应
+        for req_time, request_str in self.state.response_without_reqid:
+            try:
+                push_data.append(ParsedPushData(
+                    content=request_str,
+                    time=req_time,
+                    push_type="response_without_reqid"
+                ))
+            except Exception as e:
+                print(f"解析无请求ID响应失败: {e}")
+        
+        # 按时间排序
+        push_data.sort(key=lambda x: x.time)
+        
+        return push_data
+
+    def parse_log_list(self) -> None:
+        """
+        解析日志列表，使用三指针算法对三个列表按time字段进行合并排序
+        """
+        # 如果缓存中存在了，则不需要重新解析
+        # if len(self.state.parsed_log_list) > 0:
+        #     return
+        request_records, response_records = self.parse_and_split_request_pairs()
+        push_data = self.parse_push_data()
+        
+        # 使用三指针算法对三个列表按time字段进行合并排序
+        self.state.parsed_log_list = self._merge_sorted_lists_by_time(
+            request_records, response_records, push_data
+        )
+
+    def _merge_sorted_lists_by_time(self, 
+                                   request_records: ParsedRequestResponseList,
+                                   response_records: ParsedRequestResponseList, 
+                                   push_data: ParsedPushDataList) -> List[Union[ParsedRequestResponse, ParsedPushData]]:
+        """
+        使用三指针算法对三个列表按time字段进行合并排序
+        
+        Args:
+            request_records: 请求记录列表
+            response_records: 响应记录列表
+            push_data: 推送数据列表（已经按时间排序）
+            
+        Returns:
+            按时间排序的合并列表
+        """
+        # 对请求和响应记录按time字段进行排序（push_data已经在parse_push_data中排序过了）
+        request_records.sort(key=lambda x: x.time or "")
+        response_records.sort(key=lambda x: x.time or "")
+        
+        # 初始化三个指针
+        i, j, k = 0, 0, 0
+        merged_list = []
+        
+        # 获取列表长度
+        len_requests = len(request_records)
+        len_responses = len(response_records)
+        len_push = len(push_data)
+        
+        # 三指针合并算法
+        while i < len_requests and j < len_responses and k < len_push:
+            # 比较三个列表当前元素的时间
+            req_time = request_records[i].time or ""
+            rsp_time = response_records[j].time or ""
+            push_time = push_data[k].time or ""
+            
+            # 找到时间最小的元素
+            if req_time <= rsp_time and req_time <= push_time:
+                merged_list.append(request_records[i])
+                i += 1
+            elif rsp_time <= req_time and rsp_time <= push_time:
+                merged_list.append(response_records[j])
+                j += 1
+            else:
+                merged_list.append(push_data[k])
+                k += 1
+        
+        # 处理剩余的元素
+        # 处理剩余的请求记录
+        while i < len_requests:
+            merged_list.append(request_records[i])
+            i += 1
+        
+        # 处理剩余的响应记录
+        while j < len_responses:
+            merged_list.append(response_records[j])
+            j += 1
+        
+        # 处理剩余的推送数据
+        while k < len_push:
+            merged_list.append(push_data[k])
+            k += 1
+        
+        return merged_list
+
+    def _parse_servicename_and_action(self, request: Dict[str, Any], protocol: str) -> Tuple[str, str]:
+        """
+        解析请求中的servicename和action
+        
+        Args:
+            request: 请求内容
+            protocol: 协议类型
+            
+        Returns:
+            (servicename, action) 元组
+        """
+        servicename = ""
+        action = ""
+        
+        try:
+            if protocol == "pb":
+                if "servicename" in json.dumps(request):
+                    servicename = request.get("servicename", "")
+                    if servicename not in [
+                        "asset-product-api", "asset-institution-api", "asset-index-api",
+                        "rpc.authenticate", "rpc.quota", "rpc.order.manager", "rpc.marketdata",
+                        "rpc.trader.stock", "rpc.risk", "rpc.condition", "rpc.grid", "rpc.subcenter",
+                    ]:
+                        action = request.get("params", {}).get("action", "")
+                    else:
+                        action = request.get("method", "")
+            
+            elif protocol == "json":
+                if "servicename" in json.dumps(request):
+                    servicename = request.get("servicename", "")
+                else:
+                    servicename = request.get("method", "")
+                action = request.get("params", {}).get("action", "")
+            
+            elif protocol == "json_funid":
+                servicename = request.get("method", "")
+                action = str(request.get("params", {}).get("FunID", ""))
+        
+        except Exception as e:
+            print(f"解析servicename和action失败: {e}")
+            servicename = ""
+            action = ""
+        
+        return servicename, action

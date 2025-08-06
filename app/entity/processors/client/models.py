@@ -216,21 +216,27 @@ class AccountInfo:
     broker_id: str
     trade_type: str
 
+
 @dataclass
-class LogLine:
-    """日志行"""
-    content: str
+class ParsedRequestResponse:
+    """解析后的请求或响应记录"""
+    id: str  # 请求ID
+    content: str  # 请求或响应内容
+    time: str  # 时间戳
+    servicename: str  # 服务名称
+    action: str  # 操作名称
+    record_type: str  # 记录类型：request 或 response
+    protocol: str  # 协议类型：pb, json, json_funid
     type: str = "client"
-    req_id: str = ""
-    time: str = ""
-    req_type: str = ""
-    isError: bool = False
-    isTimeout: bool = False
-    isSkip: bool = False
-    isNewTransmit: bool = False
-    isResponseWithoutReqId: bool = False
-    isLinesWithoutReqId: bool = False
-    isSkippedReqPairs: bool = False
+
+
+@dataclass
+class ParsedPushData:
+    """解析后的推送数据记录"""
+    content: str  # 推送内容
+    time: str  # 时间戳
+    push_type: str  # 推送类型：basket_order_push, algorithm_push, gradecondition_push_instruction, gradecondition_push_condition, gradecondition_push_order, response_without_reqid
+    type: str = "client"
 
 
 # 类型别名定义
@@ -238,6 +244,8 @@ RequestPairsDict = Dict[str, RequestPair]
 QueryResultsDict = Dict[str, List[QueryResult]]
 FundTokenMapping = Dict[str, str]
 FundMapping = Dict[str, str]
+ParsedRequestResponseList = List[ParsedRequestResponse]
+ParsedPushDataList = List[ParsedPushData]
 
 
 class ProcessingConfig:
@@ -325,4 +333,4 @@ class ProcessingState:
         self.gradecondition_push_order = []
 
         # 日志列表
-        self.log_list = []
+        self.parsed_log_list = []

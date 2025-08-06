@@ -14,11 +14,9 @@ const api = {
       }
     });
   },
-  filterLogList: (content?: string): Promise<RespType<OperationLogLine[]>> => {
+  filterLogList: (data?: {content?: string, startTime?: string, endTime?: string}): Promise<RespType<OperationLogLine[]>> => {
     return apiClient.get('/log/operation/filter_log_list', {
-      params: {
-        content
-      }
+      params: data
     });
   },
 };

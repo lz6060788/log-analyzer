@@ -17,7 +17,7 @@ const content = ref('');
 const filterLogListData = ref([]);
 const refreshData = async () => {
   isLoadingData.value = true;
-  const data = await filterLogList(content.value);
+  const data = await filterLogList({ content: content.value});
   filterLogListData.value = data.map(item => ({
     ...item,
     ...parseClientLogLine(item.content)

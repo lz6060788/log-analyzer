@@ -14,11 +14,9 @@ const api = {
       }
     });
   },
-  filterLogList: (content?: string): Promise<RespType<ClientLogLine[]>> => {
+  filterLogList: (data?: {content?: string, startTime?: string, endTime?: string}): Promise<RespType<ClientLogLine[]>> => {
     return apiClient.get('/log/client/filter_log_list', {
-      params: {
-        content
-      }
+      params: data
     });
   },
   getAccountsQuery: (): Promise<RespType<any[]>> => {

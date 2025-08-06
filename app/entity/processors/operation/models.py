@@ -9,6 +9,7 @@ class LogLine:
     type: str = "operation"
     time: str = ""
     position: str = ""
+    type: str = "operation"
 
 class ProcessingState:
     """处理状态类"""

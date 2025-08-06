@@ -13,7 +13,7 @@ from .fund_processor import FundProcessor
 from .position_processor import PositionProcessor
 from .order_processor import OrderProcessor
 from .trade_processor import TradeProcessor
-from .models import LogLine, ProcessingState, RequestPairsDict
+from .models import ProcessingState, RequestPairsDict
 from .ipo_processor import IPOProcessor
 from .basket_processor import BasketProcessor
 from .algorithm_processor import AlgorithmProcessor
@@ -101,18 +101,24 @@ class ClientProcessorNew:
         # 融资融券相关解析
         self.financing_processor.parse_financing_query()
 
-    def get_log_list(self) -> List[LogLine]:
-        """
-        获取日志列表
-        """
-        return self.state.log_list
-
-    def filter_log_list(self, content: List[str]) -> List[LogLine]:
+    def filter_log_list(self, content: str = "", start_time: str = "", end_time: str = "") -> List[Any]:
         """
         过滤日志列表
         """
-        subStrList = content.split("~")
-        return [log for log in self.state.log_list if any(subStr in log.content for subStr in subStrList)]
+        self.base_processor.parse_log_list()
+        if len(self.state.parsed_log_list) == 0:
+            return []
+        result = []
+        if start_time == "" and end_time == "":
+            result = self.state.parsed_log_list
+
+        if start_time != "" and end_time != "":
+            result = [log for log in self.state.parsed_log_list if log.time >= start_time and log.time <= end_time]
+
+        if content != "":
+            subStrList = content.split("~")
+            result = [log for log in self.state.parsed_log_list if any(subStr in log.content for subStr in subStrList)]
+        return result
 
     def show_request_statics(self) -> List[Dict[str, Any]]:
         """

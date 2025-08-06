@@ -59,12 +59,12 @@ export const useClientLogAnalyser = () => {
     }
   }
 
-  const filterLogList = async (content?: string) => {
+  const filterLogList = async (data?: {content?: string, startTime?: string, endTime?: string}) => {
     if (!checkoutClientLogAnalyserStatus()) {
       return;
     }
     try {
-      const res = await clientLogApi.filterLogList(content)
+      const res = await clientLogApi.filterLogList(data)
       if (res.code !== 0) {
         throw new Error(res.message)
       }

@@ -48,15 +48,20 @@ class OperationProcessor:
         log_line = LogLine(content=line, type="operation", time=time, position=position)
         self.state.log_list.append(log_line)
 
-    def get_log_list(self) -> List[LogLine]:
-        """
-        获取日志列表
-        """
-        return self.state.log_list
-
-    def filter_log_list(self, content: List[str]) -> List[LogLine]:
+    def filter_log_list(self, content: str = "", start_time: str = "", end_time: str = "") -> List[LogLine]:
         """
         过滤日志列表
         """
-        subStrList = content.split("~")
-        return [log for log in self.state.log_list if any(subStr in log.content for subStr in subStrList)]
+        if len(self.state.log_list) == 0:
+            return []
+        result = []
+        if start_time == "" and end_time == "":
+            result = self.state.log_list
+        
+        if start_time != "" and end_time != "":
+            result = [log for log in self.state.log_list if log.time >= start_time and log.time <= end_time]
+        
+        if content != "":
+            subStrList = content.split("~")
+            result = [log for log in self.state.log_list if any(subStr in log.content for subStr in subStrList)]
+        return result

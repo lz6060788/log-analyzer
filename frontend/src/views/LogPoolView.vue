@@ -77,8 +77,8 @@
                 v-model="startTime"
                 type="datetime"
                 placeholder="开始时间"
-                format="YYYY-MM-DD HH:mm:ss"
-                value-format="YYYY-MM-DD HH:mm:ss"
+                format="YYYYMMDD HH:mm:ss"
+                value-format="YYYYMMDD HH:mm:ss"
                 class="flex-1"
                 size="default"
                 clearable
@@ -87,8 +87,8 @@
                 v-model="endTime"
                 type="datetime"
                 placeholder="结束时间"
-                format="YYYY-MM-DD HH:mm:ss"
-                value-format="YYYY-MM-DD HH:mm:ss"
+                format="YYYYMMDD HH:mm:ss"
+                value-format="YYYYMMDD HH:mm:ss"
                 class="flex-1"
                 size="default"
                 clearable
@@ -186,7 +186,11 @@ const { filterLogList: filterOperationLogList } = useOperationLogAnalyser();
 
 // 响应式数据
 const logContent = computed(() => {
-  return displayLogList.value.map(item => item.content.replace('\\', '')).join('\n')
+  return displayLogList.value.map(item => {
+    return item.type === 'client'
+      ? `[${item.time}] 【${item.record_type || item.push_type}】 ${item.id} - 【${item.protocol}】|【${item.servicename}】|【${item.action}】`
+      : `[${item.time}] ${item.content}`
+  }).join('\n')
 })
 const isLoading = ref<boolean>(false)
 const editorHeight = ref<string>('100%')
@@ -235,8 +239,8 @@ const visibleLines = computed(() => {
 const clientLogList = ref<any[]>([])
 const operationLogList = ref<any[]>([])
 const fetchLogContent = async (): Promise<void> => {
-  clientLogList.value = await filterClientLogList() || []
-  operationLogList.value = await filterOperationLogList() || []
+  clientLogList.value = await filterClientLogList({ startTime: startTime.value, endTime: endTime.value }) || []
+  operationLogList.value = await filterOperationLogList({ startTime: startTime.value, endTime: endTime.value }) || []
 }
 
 const totalLogList = computed(() => {
@@ -251,35 +255,14 @@ const totalLogList = computed(() => {
     }
   )
 })
-
 const displayLogList = computed(() => {
-    // 应用时间过滤
-  let filteredLogs = totalLogList.value
-  if (startTime.value || endTime.value) {
-    filteredLogs = filteredLogs.filter(log => {
-      const logTime = parseTimeToTimestamp(log.time, log.type)
-
-      if (startTime.value) {
-        const startTimestamp = new Date(startTime.value).getTime()
-        if (logTime < startTimestamp) return false
-      }
-
-      if (endTime.value) {
-        const endTimestamp = new Date(endTime.value).getTime()
-        if (logTime > endTimestamp) return false
-      }
-
-      return true
-    })
-  }
-
   // 应用数量限制
   const limit = parseInt(limitCount.value)
   if (limit > 0) {
-    filteredLogs = filteredLogs.slice(-limit) // 取最新的limit条记录
+    return totalLogList.value.slice(-limit) // 取最新的limit条记录
   }
 
-  return filteredLogs
+  return totalLogList.value
 })
 
 // 原始日志数量（未过滤）
@@ -389,7 +372,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 // 生命周期
 onMounted(async () => {
   await nextTick()
-  await refreshLogs()
+  // await refreshLogs()
 
   // 添加键盘事件监听
   document.addEventListener('keydown', handleKeydown)

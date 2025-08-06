@@ -84,10 +84,9 @@ def upload_file():
 def filter_log_list():
     operationProcessor = session.get('operationProcessor')
     if operationProcessor:
-        content = request.args.get('content')
-        if content:
-            return operationProcessor.filter_log_list(content)
-        else:
-            return operationProcessor.get_log_list()
+        content = request.args.get('content', "")
+        start_time = request.args.get('startTime', "")
+        end_time = request.args.get('endTime', "")
+        return operationProcessor.filter_log_list(content, start_time, end_time)
     else:
         return None, -1, '请先上传文件'
