@@ -603,7 +603,7 @@ class BaseProcessor:
                 push_data.append(ParsedPushData(
                     content=request_str,
                     time=req_time,
-                    push_type="response_without_reqid"
+                    push_type="response_push"
                 ))
             except Exception as e:
                 print(f"解析无请求ID响应失败: {e}")

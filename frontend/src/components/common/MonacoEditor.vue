@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import * as monaco from 'monaco-editor';
 import { initializeLogLanguages } from '@/utils/logLanguageManager';
 
@@ -22,18 +22,25 @@ interface Props {
   readonly?: boolean;
   language?: string;
   theme?: string;
+  defaultWordWrap?: boolean;
   showMinimap?: boolean; // 新增：控制minimap显示
   showPasteDialog?: boolean; // 新增：控制粘贴对话框显示
+  enableInteractive?: boolean; // 新增：启用交互功能
+  enableHoverLineHighlight?: boolean; // 新增：启用鼠标悬浮行高亮
 }
 
-const props = defineProps<Props>();
-const emit = defineEmits(['update:modelValue', 'scroll', 'contextmenu', 'parse-log']);
+const props = withDefaults(defineProps<Props>(), {
+  defaultWordWrap: true,
+  enableHoverLineHighlight: true
+});
+const emit = defineEmits(['update:modelValue', 'scroll', 'contextmenu', 'parse-log', 'log-click']);
 
 const editorContainer = ref<HTMLDivElement | null>(null);
 let editor: monaco.editor.IStandaloneCodeEditor | null = null;
+let decorations: string[] = [];
 
 // 横向滚动条状态
-const isWordWrap = ref(true);
+const isWordWrap = ref(props.defaultWordWrap ?? true);
 
 // 暴露给父组件的方法
 const getSelectedText = (): string => {
@@ -57,6 +64,18 @@ const toggleHorizontalScrollbar = () => {
   });
 };
 
+// 处理双击事件
+const handleMouseDoubleClick = (e: monaco.editor.IEditorMouseEvent) => {
+  if (!props.enableInteractive || !editor) return;
+  
+  const position = e.target.position;
+  if (!position) return;
+  
+  const lineNumber = position.lineNumber;
+  
+  // 只向外层抛出双击事件和行数，不进行日志解析
+  emit('log-click', { type: 'double-click', lineNumber });
+};
 // 暴露方法给父组件
 defineExpose({
   getSelectedText,
@@ -98,7 +117,14 @@ onMounted(() => {
       contextmenu: true,
       // 自定义右键菜单
       quickSuggestions: false,
-      suggestOnTriggerCharacters: false
+      suggestOnTriggerCharacters: false,
+      // 启用悬浮提示
+      hover: {
+        enabled: true,
+        delay: 300
+      },
+      // 行高亮配置
+      renderLineHighlight: 'all', // 当前行高亮
     });
 
     // 自定义右键菜单
@@ -151,6 +177,52 @@ onMounted(() => {
       }
     });
 
+    // 添加交互功能
+    if (props.enableInteractive) {
+      // 监听鼠标双击事件
+      editor.onMouseDown((e) => {
+        // 检查是否为双击事件
+        if (e.event && e.event.detail === 2) {
+          handleMouseDoubleClick(e);
+        }
+      });
+    }
+
+    // 鼠标悬浮行高亮功能
+    if (props.enableHoverLineHighlight) {
+      let currentHoverLine: number | null = null;
+      editor.onMouseMove((e) => {
+        const position = e.target.position;
+        if (position) {
+          const lineNumber = position.lineNumber;
+          if (currentHoverLine !== lineNumber) {
+            // 清除之前的高亮
+            if (currentHoverLine) {
+              decorations = editor!.deltaDecorations(decorations, []);
+            }
+            // 添加新的高亮
+            currentHoverLine = lineNumber;
+            const range = new monaco.Range(lineNumber, 1, lineNumber, 1);
+            decorations = editor!.deltaDecorations(decorations, [{
+              range: range,
+              options: {
+                className: 'hover-line-highlight',
+                isWholeLine: true
+              }
+            }]);
+          }
+        }
+      });
+
+      // 鼠标离开编辑器时清除高亮
+      editor.onMouseLeave(() => {
+        if (currentHoverLine) {
+          decorations = editor!.deltaDecorations(decorations, []);
+          currentHoverLine = null;
+        }
+      });
+    }
+
     editor.onDidChangeModelContent(() => {
       if (editor) {
         emit('update:modelValue', editor.getValue());
@@ -199,5 +271,21 @@ onBeforeUnmount(() => {
 .editor-container {
   width: 100%;
   height: 100%;
+}
+
+/* 交互式行的样式 */
+:deep(.log-interactive-line) {
+  background-color: rgba(0, 122, 204, 0.1) !important;
+  cursor: pointer !important;
+}
+
+:deep(.log-interactive-line:hover) {
+  background-color: rgba(0, 122, 204, 0.2) !important;
+}
+
+/* 鼠标悬浮行高亮样式 */
+:deep(.hover-line-highlight) {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-left: 2px solid rgba(0, 122, 204, 0.5) !important;
 }
 </style>

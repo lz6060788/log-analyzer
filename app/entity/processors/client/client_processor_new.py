@@ -23,11 +23,11 @@ from .financing_processor import FinancingProcessor
 
 class ClientProcessorNew:
     """重构后的客户端处理器主类"""
-    
+
     def __init__(self, file_list: List[str], isJupyter: bool = True):
         """
         初始化处理器
-        
+
         Args:
             file_list: 文件内容列表
         """
@@ -36,12 +36,12 @@ class ClientProcessorNew:
         pd.set_option('display.max_columns', None)
         pd.set_option('display.width', 1000)
         pd.set_option('display.float_format', '{:.2f}'.format)
-        
+
         # 初始化基础处理器
         self.base_processor = BaseProcessor(isJupyter)
         self.state = self.base_processor.state
         self.req_pairs = self.base_processor.req_pairs
-        
+
         # 存储文件列表
         self.file_list = file_list
 
@@ -123,7 +123,7 @@ class ClientProcessorNew:
     def show_request_statics(self) -> List[Dict[str, Any]]:
         """
         显示请求统计
-        
+
         Returns:
             统计结果列表
         """

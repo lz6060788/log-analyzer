@@ -1,7 +1,7 @@
 <template>
   <div class="log-paste-view">
     <p class="mb-2 text-gray-600">在此处粘贴日志内容，下方表格会进行解析并美化json内容</p>
-    <MonacoEditor v-model="logText" height="400px" language="client-log" theme="client-log-theme" :readonly="true" />
+    <MonacoEditor v-model="logText" height="400px" language="client-log" theme="client-log-theme" />
     <div class="log-list">
       <div class="w-full">
         <el-table :data="tableData" style="min-width: 800px; width: 100%" :default-sort="{prop: tableHeaders[0], order: 'ascending'}" border>

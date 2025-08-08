@@ -39,13 +39,14 @@ class OperationProcessor:
 
         # 时间：前两个字段
         time = f"{parts[0]} {parts[1]}"
+        content = ' '.join(parts[4:])
 
         # position：倒数第二个字段按"-"分割后的第一个字段
         second_last_field = parts[-2]
         position = second_last_field.split("-")[0] if "-" in second_last_field else second_last_field
 
         # 解析日志行
-        log_line = LogLine(content=line, type="operation", time=time, position=position)
+        log_line = LogLine(content=content, type="operation", time=time, position=position)
         self.state.log_list.append(log_line)
 
     def filter_log_list(self, content: str = "", start_time: str = "", end_time: str = "") -> List[LogLine]:
@@ -57,10 +58,10 @@ class OperationProcessor:
         result = []
         if start_time == "" and end_time == "":
             result = self.state.log_list
-        
+
         if start_time != "" and end_time != "":
             result = [log for log in self.state.log_list if log.time >= start_time and log.time <= end_time]
-        
+
         if content != "":
             subStrList = content.split("~")
             result = [log for log in self.state.log_list if any(subStr in log.content for subStr in subStrList)]

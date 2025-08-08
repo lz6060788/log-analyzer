@@ -59,8 +59,10 @@
           theme="client-log-theme"
           :show-minimap="true"
           :show-paste-dialog="true"
+          :enable-interactive="true"
           @scroll="handleEditorScroll"
           @parse-log="handleParseLog"
+          @log-click="handleLogClick"
         />
       </div>
 
@@ -164,18 +166,31 @@
           <h4 class="text-sm font-medium text-blue-900 mb-2">使用说明</h4>
           <ul class="text-xs text-blue-700 space-y-1">
             <li>• 可在minimap上拖拽快速定位</li>
+            <li>• 双击有详细内容的日志行可查看详细信息</li>
             <li>• 右键菜单包含"解析选中日志"选项</li>
             <li>• 右键菜单包含"切换横向滚动条"选项</li>
+            <li>• 日志关键字高亮自定义</li>
           </ul>
         </div>
       </div>
     </div>
+
+    <!-- 日志详情对话框 -->
+    <LogDetailDialog
+      v-model="logDetailDialogVisible"
+      :log-detail="currentLogDetail"
+      :current-line-number="currentClickedLineNumber"
+      :total-lines="displayLogList.length"
+      @previous-line="handlePreviousLine"
+      @next-line="handleNextLine"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, onUnmounted } from 'vue'
 import MonacoEditor from '@/components/common/MonacoEditor.vue'
+import LogDetailDialog from '@/components/common/LogDetailDialog.vue'
 import { useClientLogAnalyser } from '@/composable/clientLog';
 import { useOperationLogAnalyser } from '@/composable/operationLog';
 import { parseTimeToTimestamp, mergeSortedArrays } from '@/utils/timeUtils';
@@ -186,16 +201,29 @@ const { filterLogList: filterOperationLogList } = useOperationLogAnalyser();
 
 // 响应式数据
 const logContent = computed(() => {
-  return displayLogList.value.map(item => {
-    return item.type === 'client'
-      ? `[${item.time}] 【${item.record_type || item.push_type}】 ${item.id} - 【${item.protocol}】|【${item.servicename}】|【${item.action}】`
-      : `[${item.time}] ${item.content}`
-  }).join('\n')
+  return displayLogList.value.map(formatLogContent).join('\n')
 })
+const formatLogContent = (log: any) => {
+  if (log.type === 'client') {
+    if (log.record_type) {
+      return `[${log.time}] 【${log.record_type}】 ${log.id} - 【${log.protocol}】|【${log.servicename}】|【${log.action}】`
+    }
+    if (log.push_type) {
+      return `[${log.time}] 【${log.push_type}】 ${log.push_type === 'response_push' ? log.content : ''}`
+    }
+  }
+  return `[${log.time}] ${log.content}`
+}
+
 const isLoading = ref<boolean>(false)
 const editorHeight = ref<string>('100%')
 const isFullscreen = ref<boolean>(false)
 const monacoEditorRef = ref<InstanceType<typeof MonacoEditor> | null>(null)
+
+// 日志详情对话框
+const logDetailDialogVisible = ref<boolean>(false)
+const currentLogDetail = ref<any>(null)
+const currentClickedLineNumber = ref<number>(-1) // 新增：记住当前点击的行数
 
 // 过滤相关数据
 const startTime = ref<string>('')
@@ -356,11 +384,83 @@ const handleEditorScroll = (event: any) => {
 
 // 处理日志解析
 const handleParseLog = (selectedText: string) => {
-  console.log('handleParseLog', selectedText)
   if (selectedText.trim()) {
     openLogPasteDialog(selectedText)
   }
 }
+
+// 解析日志行，提取详细信息
+const parseLogLine = (lineNumber: number) => {
+  if (!displayLogList.value || lineNumber < 1 || lineNumber > displayLogList.value.length) {
+    return null;
+  }
+
+  const logData = displayLogList.value[lineNumber - 1];
+  const details: any = {};
+
+  // 提取基本信息
+  if (logData.type === 'client') {
+    details.type = '客户端日志';
+    details.time = logData.time;
+    details.id = logData.id;
+
+    if (logData.record_type) {
+      details.recordType = logData.record_type;
+      details.protocol = logData.protocol;
+      details.serviceName = logData.servicename;
+      details.action = logData.action;
+      details.content = logData.content; // 原始内容
+    }
+
+    if (logData.push_type) {
+      details.pushType = logData.push_type;
+      details.content = logData.content;
+    }
+  } else {
+    details.type = '操作日志';
+    details.time = logData.time;
+    details.content = logData.content;
+  }
+
+  return details;
+};
+
+// 处理日志点击事件
+const handleLogClick = (event: any) => {
+  if (event.type === 'double-click') {
+    // 记住当前点击的行数
+    currentClickedLineNumber.value = event.lineNumber;
+
+    // 解析日志行
+    const details = parseLogLine(event.lineNumber);
+    if (details) {
+      currentLogDetail.value = details;
+      logDetailDialogVisible.value = true;
+    }
+  }
+};
+
+// 处理上一行
+const handlePreviousLine = () => {
+  if (currentClickedLineNumber.value > 1) {
+    currentClickedLineNumber.value--;
+    const details = parseLogLine(currentClickedLineNumber.value);
+    if (details) {
+      currentLogDetail.value = details;
+    }
+  }
+};
+
+// 处理下一行
+const handleNextLine = () => {
+  if (currentClickedLineNumber.value < displayLogList.value.length) {
+    currentClickedLineNumber.value++;
+    const details = parseLogLine(currentClickedLineNumber.value);
+    if (details) {
+      currentLogDetail.value = details;
+    }
+  }
+};
 
 // 监听ESC键退出全屏
 const handleKeydown = (event: KeyboardEvent) => {
