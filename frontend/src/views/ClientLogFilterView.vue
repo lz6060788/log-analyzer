@@ -12,6 +12,7 @@ import algorithmPanel from '@/components/clientLogFilter/algorithmPanel.vue';
 import ConditionPanel from '@/components/clientLogFilter/conditionPanel.vue';
 import filterPanel from '@/components/clientLogFilter/filterPanel.vue';
 import floatingNavigation from '@/components/common/FloatingNavigation.vue';
+import PageHeader from '@/components/common/PageHeader.vue';
 
 const items = [
   { title: '汇总请求统计' },
@@ -30,20 +31,25 @@ const items = [
 </script>
 
 <template>
-  <teleport to="#container-wrapper">
-    <floating-navigation title="导航窗口" :navigationItems="items"></floating-navigation>
-  </teleport>
-  <statistic-panel></statistic-panel>
-  <accounts-panel></accounts-panel>
-  <fund-panel></fund-panel>
-  <position-panel></position-panel>
-  <order-panel></order-panel>
-  <trade-panel></trade-panel>
-  <ipo-panel></ipo-panel>
-  <finable-panel></finable-panel>
-  <basket-panel></basket-panel>
-  <algorithm-panel></algorithm-panel>
-  <condition-panel></condition-panel>
-  <filter-panel></filter-panel>
+  <div class="min-h-screen bg-gray-50">
+    <PageHeader/>
+    <div class="p-6">
+      <teleport to="#container-wrapper">
+        <floating-navigation title="导航窗口" :navigationItems="items"></floating-navigation>
+      </teleport>
+      <statistic-panel></statistic-panel>
+      <accounts-panel></accounts-panel>
+      <fund-panel></fund-panel>
+      <position-panel></position-panel>
+      <order-panel></order-panel>
+      <trade-panel></trade-panel>
+      <ipo-panel></ipo-panel>
+      <finable-panel></finable-panel>
+      <basket-panel></basket-panel>
+      <algorithm-panel></algorithm-panel>
+      <condition-panel></condition-panel>
+      <filter-panel></filter-panel>
+    </div>
+  </div>
 </template>
 

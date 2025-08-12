@@ -89,4 +89,4 @@ def filter_log_list():
         end_time = request.args.get('endTime', "")
         return operationProcessor.filter_log_list(content, start_time, end_time)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端操作日志'

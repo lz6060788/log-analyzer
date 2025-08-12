@@ -59,7 +59,7 @@ const props = defineProps({
   }
 });
 
-const expanded = ref(false);
+const expanded = ref(true);
 const isFullscreen = ref(false);
 
 const toggleExpand = () => {

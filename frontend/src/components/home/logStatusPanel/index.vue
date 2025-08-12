@@ -4,12 +4,21 @@ import { useClientLogAnalyser } from '@/composable/clientLog';
 import { useOperationLogAnalyser } from '@/composable/operationLog';
 import { LogAnalyserType, LogAnalyserStatusType } from '@/types';
 import { ref, computed } from 'vue';
-
+import { globalApi } from '@/api';
+import { useGlobalStore } from '@/store/global';
 
 // 获取客户端日志分析器
 const clientLogAnalyser = useClientLogAnalyser();
 // 获取操作日志分析器
 const operationLogAnalyser = useOperationLogAnalyser();
+
+const store = useGlobalStore();
+globalApi.getStatus().then(res => {
+  if (res.code === 0) {
+    store.setLogAnalyserStatus(LogAnalyserType.Client, res.data.client_status ? LogAnalyserStatusType.Ready : LogAnalyserStatusType.None);
+    store.setLogAnalyserStatus(LogAnalyserType.Operation, res.data.operation_status ? LogAnalyserStatusType.Ready : LogAnalyserStatusType.None);
+  }
+})
 
 // 日志类型配置
 const logTypes = [
@@ -99,38 +108,36 @@ const handleLogChange = async (e: Event, logType: LogAnalyserType) => {
 </script>
 
 <template>
-  <div class="flex gap-4">
-    <div
-      class="p-2 bg-blue-100 w-80 rounded-lg"
-    >
-      <template v-for="logConfig in logTypes" :key="logConfig.type">
+  <div
+    class="flex gap-4 p-2 bg-blue-100 rounded-lg"
+  >
+    <template v-for="logConfig in logTypes" :key="logConfig.type">
+      <div
+        :class="getStatusClasses(logConfig.status.value)"
+        @click="startLogAnalyser(logConfig.type)"
+      >
+        <span class="text-gray-600">{{ logConfig.title }}</span>
         <div
-          :class="getStatusClasses(logConfig.status.value)"
-          @click="startLogAnalyser(logConfig.type)"
+          class="flex items-center gap-4"
+          :class="getIconClasses(logConfig.status.value)"
         >
-          <span class="text-gray-600">{{ logConfig.title }}</span>
-          <div
-            class="flex items-center gap-4"
-            :class="getIconClasses(logConfig.status.value)"
-          >
-            <span>{{ getStatusText(logConfig.status.value) }}</span>
-            <component
-              :is="getStatusIcon(logConfig.status.value)"
-              class="size-6"
-              :class="{ 'animate-spin': logConfig.status.value === LogAnalyserStatusType.Running }"
-            />
-          </div>
-          <input
-            type="file"
-            :name="`${logConfig.type}log`"
-            :id="`${logConfig.type}logInput`"
-            class="hidden"
-            multiple
-            :accept="logConfig.accept"
-            @change="(e) => handleLogChange(e, logConfig.type)"
-          >
+          <span>{{ getStatusText(logConfig.status.value) }}</span>
+          <component
+            :is="getStatusIcon(logConfig.status.value)"
+            class="size-6"
+            :class="{ 'animate-spin': logConfig.status.value === LogAnalyserStatusType.Running }"
+          />
         </div>
-      </template>
-    </div>
+        <input
+          type="file"
+          :name="`${logConfig.type}log`"
+          :id="`${logConfig.type}logInput`"
+          class="hidden"
+          multiple
+          :accept="logConfig.accept"
+          @change="(e) => handleLogChange(e, logConfig.type)"
+        >
+      </div>
+    </template>
   </div>
 </template>

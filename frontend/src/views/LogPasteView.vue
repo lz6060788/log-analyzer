@@ -1,44 +1,48 @@
 <template>
-  <div class="log-paste-view">
-    <p class="mb-2 text-gray-600">在此处粘贴日志内容，下方表格会进行解析并美化json内容</p>
-    <MonacoEditor v-model="logText" height="400px" language="client-log" theme="client-log-theme" />
-    <div class="log-list">
-      <div class="w-full">
-        <el-table :data="tableData" style="min-width: 800px; width: 100%" :default-sort="{prop: tableHeaders[0], order: 'ascending'}" border>
-          <el-table-column v-if="hasAnyJson" label="操作" fixed="left" width="100">
-            <template #default="{ row }">
-              <el-button v-if="row.hasJson" size="small" @click="showJson(row.jsonStr)">查看JSON</el-button>
-            </template>
-          </el-table-column>
-          <el-table-column v-if="hasAnyUuid" label="UUID" fixed="left" width="320">
-            <template #default="{ row }">
-              <copyText v-if="row.uuid" :text="row.uuid" />
-            </template>
-          </el-table-column>
-          <el-table-column v-if="hasAnyMethod" label="Method" fixed="left" width="160">
-            <template #default="{ row }">
-              <copyText v-if="row.method" :text="row.method" />
-            </template>
-          </el-table-column>
-          <el-table-column
-            v-for="(header, idx) in tableHeaders"
-            :key="idx"
-            :prop="header.prop"
-            :label="header.label"
-            sortable
-            :filters="header.filters"
-            :filter-method="header.filterMethod"
-            show-overflow-tooltip
-            :width="200"
-          >
-            <template #default="{ row }">
-              <div class="cell-ellipsis" :class="{highlight: row[header.prop + '_highlight']}" >{{ row[header.prop] }}</div>
-            </template>
-          </el-table-column>
-        </el-table>
+  <div class="min-h-screen bg-gray-50">
+    <PageHeader />
+
+    <div class="p-6">
+      <p class="mb-2 text-gray-600">在此处粘贴日志内容，下方表格会进行解析并美化json内容</p>
+      <MonacoEditor v-model="logText" height="400px" language="client-log" theme="client-log-theme" />
+      <div class="log-list">
+        <div class="w-full">
+          <el-table :data="tableData" style="min-width: 800px; width: 100%" :default-sort="{prop: tableHeaders[0], order: 'ascending'}" border>
+            <el-table-column v-if="hasAnyJson" label="操作" fixed="left" width="100">
+              <template #default="{ row }">
+                <el-button v-if="row.hasJson" size="small" @click="showJson(row.jsonStr)">查看JSON</el-button>
+              </template>
+            </el-table-column>
+            <el-table-column v-if="hasAnyUuid" label="UUID" fixed="left" width="320">
+              <template #default="{ row }">
+                <copyText v-if="row.uuid" :text="row.uuid" />
+              </template>
+            </el-table-column>
+            <el-table-column v-if="hasAnyMethod" label="Method" fixed="left" width="160">
+              <template #default="{ row }">
+                <copyText v-if="row.method" :text="row.method" />
+              </template>
+            </el-table-column>
+            <el-table-column
+              v-for="(header, idx) in tableHeaders"
+              :key="idx"
+              :prop="header.prop"
+              :label="header.label"
+              sortable
+              :filters="header.filters"
+              :filter-method="header.filterMethod"
+              show-overflow-tooltip
+              :width="200"
+            >
+              <template #default="{ row }">
+                <div class="cell-ellipsis" :class="{highlight: row[header.prop + '_highlight']}" >{{ row[header.prop] }}</div>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
       </div>
+      <JsonViewerDialog v-model="jsonDialogVisible" :json="currentJson" />
     </div>
-    <JsonViewerDialog v-model="jsonDialogVisible" :json="currentJson" />
   </div>
 </template>
 
@@ -48,6 +52,7 @@ import MonacoEditor from '../components/common/MonacoEditor.vue';
 import JsonViewerDialog from '../components/common/JsonViewerDialog.vue';
 import { parseClientLogLines } from '../composable/clientLogParser';
 import copyText from '../components/common/copyText.vue';
+import PageHeader from '../components/common/PageHeader.vue';
 
 const props = defineProps<{
   logText?: string;

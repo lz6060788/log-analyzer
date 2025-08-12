@@ -93,7 +93,7 @@ def filter_log_list():
         end_time = request.args.get('endTime', "")
         return clientreq.filter_log_list(content, start_time, end_time)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/query_fetch_statistics', methods=['GET'])
 @standard_json_response
@@ -102,7 +102,7 @@ def query_fetch_statistics():
     if clientreq:
         return clientreq.show_request_statics()
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/query_accounts_logs', methods=['GET'])
 @standard_json_response
@@ -111,7 +111,7 @@ def query_accounts_logs():
     if clientreq:
         return clientreq.account_processor.query_accounts_df
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/query_fund_logs', methods=['GET'])
 @standard_json_response
@@ -120,7 +120,7 @@ def query_funds_data():
     if clientreq:
         return clientreq.get_fund_query_data()
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/query_position_logs', methods=['GET'])
 @standard_json_response
@@ -129,7 +129,7 @@ def query_position_data():
     if clientreq:
         return clientreq.get_position_query_data()
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
     
 @client_bp.route('/query_order_logs', methods=['GET'])
 @standard_json_response
@@ -138,7 +138,7 @@ def query_order_data():
     if clientreq:
         return clientreq.get_order_query_data()
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/query_order_summary', methods=['GET'])
 @standard_json_response
@@ -147,7 +147,7 @@ def query_order_summary():
     if clientreq:
         return clientreq.get_order_summary()
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/trade_query_data', methods=['GET'])
 @standard_json_response
@@ -157,7 +157,7 @@ def get_trade_query_data():
     if clientreq:
         return clientreq.get_trade_query_data()
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/query_trade_summary', methods=['GET'])
 @standard_json_response
@@ -166,7 +166,7 @@ def query_trade_summary():
     if clientreq:
         return clientreq.get_trade_summary()
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/position_querytime/<fundkey>', methods=['GET'])
 @standard_json_response
@@ -176,7 +176,7 @@ def get_position_querytime(fundkey):
     if clientreq:
         return clientreq.get_position_querytime(fundkey)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/order_querytime/<fundkey>', methods=['GET'])
 @standard_json_response
@@ -186,7 +186,7 @@ def get_order_querytime(fundkey):
     if clientreq:
         return clientreq.get_order_querytime(fundkey)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/trade_querytime/<fundkey>', methods=['GET'])
 @standard_json_response
@@ -196,7 +196,7 @@ def get_trade_querytime(fundkey):
     if clientreq:
         return clientreq.get_trade_querytime(fundkey)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 # 新股申购相关路由
 @client_bp.route('/ipo_query_data', methods=['GET'])
@@ -208,7 +208,7 @@ def get_ipo_query_data():
         fund = request.args.get('fund')
         return clientreq.get_ipo_query_data(fund if fund else None)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/ipo_lottery_data', methods=['GET'])
 @standard_json_response
@@ -219,7 +219,7 @@ def get_ipo_lottery_data():
         fund = request.args.get('fund')
         return clientreq.get_ipo_lottery_data(fund if fund else None)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 # 篮子交易相关路由
 @client_bp.route('/basket_summary_data', methods=['GET'])
@@ -233,7 +233,7 @@ def get_basket_summary_data():
     if clientreq:
         return clientreq.get_basket_summary_data(source, fund, stockcode)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/basket_instance_detail', methods=['GET'])
 @standard_json_response
@@ -244,7 +244,7 @@ def get_basket_instance_detail():
     if clientreq:
         return clientreq.get_basket_instance_detail(instanceid)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/basket_order_detail', methods=['GET'])
 @standard_json_response
@@ -257,7 +257,7 @@ def get_basket_order_detail():
     if clientreq:
         return clientreq.get_basket_order_detail(instanceid, fund, stockcode)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/basket_query_data', methods=['GET'])
 @standard_json_response
@@ -268,7 +268,7 @@ def get_basket_query_data():
         querytime = request.args.get('querytime')
         return clientreq.get_basket_query_data(querytime)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/basket_initreqs', methods=['GET'])
 @standard_json_response
@@ -279,7 +279,7 @@ def get_basket_initreqs():
     if clientreq:
         return clientreq.get_basket_initreqs(instance)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 
 # 算法交易相关路由
@@ -291,7 +291,7 @@ def get_new_algorithm_order():
     if clientreq:
         return clientreq.get_new_algorithm_order()
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/algorithm_code', methods=['GET'])
 @standard_json_response
@@ -301,7 +301,7 @@ def get_algorithm_code():
     if clientreq:
         return clientreq.get_algorithm_code()
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/algorithm_detail', methods=['GET'])
 @standard_json_response
@@ -313,7 +313,7 @@ def get_algorithm_detail():
         result = clientreq.get_algorithm_detail(instanceid)
         return result.to_dict('records') if result is not None else None
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/algorithm_push_detail', methods=['GET'])
 @standard_json_response
@@ -326,7 +326,7 @@ def get_algorithm_push_detail():
         push_type = request.args.get('push_type', '')
         return clientreq.get_algorithm_push_detail(instanceid, push_type)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/algorithm_query_data', methods=['GET'])
 @standard_json_response
@@ -336,7 +336,7 @@ def get_algorithm_query_data():
     if clientreq:
         return clientreq.get_algorithm_query_data()
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 # 条件交易相关路由
 @client_bp.route('/condition_summary_data', methods=['GET'])
@@ -347,7 +347,7 @@ def get_condition_summary_data():
     if clientreq:
         return clientreq.get_condition_summary_data()
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/condition_instance_detail_data', methods=['GET'])
 @standard_json_response
@@ -358,7 +358,7 @@ def get_condition_instance_detail_data():
         order_no = request.args.get('order_no')
         return clientreq.get_condition_instance_detail_data(order_no)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/condition_order_detail_data', methods=['GET'])
 @standard_json_response
@@ -369,7 +369,7 @@ def get_condition_order_detail_data():
         order_no = request.args.get('order_no')
         return clientreq.get_condition_order_detail_data(order_no)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/condition_security_order_detail_data', methods=['GET'])
 @standard_json_response
@@ -382,7 +382,7 @@ def get_condition_security_order_detail_data():
         order_no = request.args.get('order_no')
         return clientreq.get_condition_security_order_detail_data(order_no, fund, security)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/condition_initreqs_data', methods=['GET'])
 @standard_json_response
@@ -393,7 +393,7 @@ def get_condition_initreqs_data():
         order_no = request.args.get('order_no')
         return clientreq.get_condition_initreqs_data(order_no)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/querycondition_data', methods=['GET'])
 @standard_json_response
@@ -404,7 +404,7 @@ def get_querycondition_data():
         querytime = request.args.get('querytime')
         return clientreq.get_querycondition_data(querytime)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 # 融资融券相关路由
 @client_bp.route('/finable_security_data', methods=['GET'])
@@ -416,7 +416,7 @@ def get_finable_security_data():
         fund_key = request.args.get('fund_key')
         return clientreq.get_finable_security_data(fund_key if fund_key else None)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/finable_security_failed', methods=['GET'])
 @standard_json_response
@@ -426,7 +426,7 @@ def get_finable_security_failed():
     if clientreq:
         return clientreq.get_finable_security_failed()
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
 @client_bp.route('/finable_security_querytime/<fundkey>', methods=['GET'])
 @standard_json_response
@@ -436,5 +436,5 @@ def get_finable_security_querytime(fundkey):
     if clientreq:
         return clientreq.get_finable_security_querytime(fundkey)
     else:
-        return None, -1, '请先上传文件'
+        return None, -1, '请先上传客户端全量日志'
 
