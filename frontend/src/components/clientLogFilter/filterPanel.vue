@@ -1,12 +1,8 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useClientLogAnalyser } from '@/composable/clientLog';
 import dataPanel from '@/components/common/dataPanel.vue';
-import commonTable from '@/components/common/commonTable';
-import { useClientLogStore } from '@/store/clientLog'
-import { storeToRefs } from 'pinia';
-import { ElMessage } from 'element-plus';
-import { Document, InfoFilled } from '@element-plus/icons-vue';
+import { Document } from '@element-plus/icons-vue';
 import JsonViewerDialog from '@/components/common/JsonViewerDialog.vue';
 import { parseClientLogLine } from '@/composable/clientLogParser';
 
@@ -15,6 +11,40 @@ const { filterLogList } = useClientLogAnalyser();
 const isLoadingData = ref(false);
 const content = ref('');
 const filterLogListData = ref([]);
+
+// 分页相关状态
+const currentPage = ref(1);
+const pageSize = ref(20);
+const pageSizeOptions = [10, 20, 50, 100];
+
+// 计算分页后的数据
+const paginatedData = computed(() => {
+  const startIndex = (currentPage.value - 1) * pageSize.value;
+  const endIndex = startIndex + pageSize.value;
+  return filterLogListData.value.slice(startIndex, endIndex);
+});
+
+// 计算总页数
+const totalPages = computed(() => {
+  return Math.ceil(filterLogListData.value.length / pageSize.value);
+});
+
+// 计算总数据量
+const totalDataCount = computed(() => {
+  return filterLogListData.value.length;
+});
+
+// 页码改变处理
+const handlePageChange = (page) => {
+  currentPage.value = page;
+};
+
+// 每页显示数量改变处理
+const handleSizeChange = (size) => {
+  pageSize.value = size;
+  currentPage.value = 1; // 重置到第一页
+};
+
 const refreshData = async () => {
   isLoadingData.value = true;
   const data = await filterLogList({ content: content.value});
@@ -22,6 +52,8 @@ const refreshData = async () => {
     ...item,
     ...parseClientLogLine(item.content)
   }));
+  // 重置分页到第一页
+  currentPage.value = 1;
   isLoadingData.value = false;
 };
 
@@ -29,6 +61,8 @@ const refreshData = async () => {
 const clearData = () => {
   filterLogListData.value = [];
   content.value = '';
+  // 重置分页
+  currentPage.value = 1;
 };
 
 const jsonDialogVisible = ref(false);
@@ -60,7 +94,13 @@ function showJson(json) {
       </div>
       <!-- 数据列表 -->
       <div v-else class="space-y-4">
-        <div v-for="(item, index) in filterLogListData" :key="index"
+        <!-- 数据统计信息 -->
+        <div class="flex items-center justify-between text-sm text-gray-600 mb-4">
+          <span>共 {{ totalDataCount }} 条记录</span>
+          <span>第 {{ currentPage }} 页，共 {{ totalPages }} 页</span>
+        </div>
+        
+        <div v-for="(item, index) in paginatedData" :key="index"
              class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
           <!-- 文本内容区域 -->
           <div class="p-4">
@@ -69,7 +109,7 @@ function showJson(json) {
                 <el-icon class="text-blue-500">
                   <Document />
                 </el-icon>
-                <span class="text-sm font-medium text-gray-700">日志条目 #{{ index + 1 }}</span>
+                <span class="text-sm font-medium text-gray-700">日志条目 #{{ (currentPage - 1) * pageSize + index + 1 }}</span>
                 <el-tag v-if="item.isError" type="danger">错误</el-tag>
                 <el-tag v-if="item.isTimeout" type="danger">超时</el-tag>
                 <el-tag v-if="item.isSkip" type="info">跳过</el-tag>
@@ -97,6 +137,22 @@ function showJson(json) {
               </p>
             </div>
           </div>
+        </div>
+        
+        <!-- 分页组件 -->
+        <div class="flex items-center justify-center mt-6">
+          <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :page-sizes="pageSizeOptions"
+            :total="totalDataCount"
+            :page-count="totalPages"
+            layout="total, sizes, prev, pager, next, jumper"
+            @current-change="handlePageChange"
+            @size-change="handleSizeChange"
+            background
+            hide-on-single-page
+          />
         </div>
       </div>
     </template>
