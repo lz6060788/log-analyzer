@@ -29,14 +29,14 @@ def download_flask_app():
     try:
         # 使用基于Flask应用根目录的绝对路径
         app_root = current_app.root_path
-        exe_file = os.path.join(app_root, '..', 'static', 'updates', 'flask_app.exe')
+        exe_file = os.path.join(app_root, '..', 'static', 'updates', 'flask_app.zip')
         exe_file = os.path.abspath(exe_file)
         
         if os.path.exists(exe_file):
             return send_file(
                 exe_file,
                 as_attachment=True,
-                download_name='flask_app.exe',
+                download_name='flask_app.zip',
                 mimetype='application/octet-stream'
             )
         else:

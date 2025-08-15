@@ -56,3 +56,5 @@ plan.md
 Dockerfile
 docker-compose.yaml
 .dockerignore 
+
+client/build

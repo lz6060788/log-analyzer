@@ -13,14 +13,12 @@ if sys.platform == 'win32':
     except:
         pass
 
-from flask import Flask, render_template, session, jsonify, send_from_directory, request
+from flask import Flask, jsonify, send_from_directory, request
 from flask_session import Session
 from api.log.routes import log_bp
 from utils.request import CustomJSONEncoder
 import mimetypes
 from api.updates.routes import updates_bp
-from pathlib import Path
-import json
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 
@@ -57,7 +55,6 @@ def custom_static(filename):
 @app.route('/')
 def index():
     static_folder = os.path.join(os.path.dirname(__file__), '..', 'static')
-    print(static_folder)
     return send_from_directory(static_folder, 'index.html', mimetype='text/html')
 
 # 配置Session
@@ -65,6 +62,24 @@ app.config['SESSION_TYPE'] = 'filesystem'  # 指定存储类型
 app.config['SESSION_PERMANENT'] = False  # 如果设置为True，则关闭浏览器会话不会过期
 app.config['SESSION_USE_SIGNER'] = False  # 是否对发送到客户端的session_id进行签名
 app.config['SESSION_KEY_PREFIX'] = 'log:'  # 存储键的前缀
+
+# 明确指定session文件存储路径
+import tempfile
+if os.environ.get('FLASK_ENV') == 'production':
+    # 生产环境（客户端）使用临时目录
+    session_dir = os.path.join(tempfile.gettempdir(), 'log_analyzer_sessions')
+else:
+    # 开发环境使用项目根目录
+    session_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'flask_session')
+
+# 确保session目录存在
+if not os.path.exists(session_dir):
+    os.makedirs(session_dir, exist_ok=True)
+
+app.config['SESSION_FILE_DIR'] = session_dir
+app.config['SESSION_FILE_THRESHOLD'] = 500  # 单个session文件的最大大小（字节）
+
+print(f"Session存储路径: {session_dir}")
 
 # 配置自定义JSON编码器
 app.json_encoder = CustomJSONEncoder
@@ -83,7 +98,9 @@ def health_check():
 app.register_blueprint(log_bp)
 app.register_blueprint(updates_bp)  # 添加更新路由
 
+debug_mode = os.getenv('FLASK_ENV', 'development').lower() in ('development')
+
 if __name__ == '__main__':
     print("🚀 启动Log Analyzer...")
     print("🌐 启动Flask服务器...")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=debug_mode, host='0.0.0.0', port=5000)

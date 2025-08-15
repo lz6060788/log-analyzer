@@ -2,3 +2,7 @@ node_modules
 __pycache__
 flask_session
 logs
+
+client/build
+client/dist
+static/updates/tempData

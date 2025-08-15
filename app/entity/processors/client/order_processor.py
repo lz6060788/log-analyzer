@@ -3,7 +3,6 @@
 负责委托订单查询和处理
 """
 
-import json
 from typing import Dict, List, Any, Optional
 import pandas as pd
 from datetime import datetime
@@ -266,60 +265,7 @@ class OrderProcessor:
             )
         ]
         return sorted_querytime_list
-    
-    def show_queryorder(self, account: str, querytime: str) -> None:
-        """
-        显示委托查询结果
-        
-        Args:
-            account: 账户信息
-            querytime: 查询时间
-        """
-        fund = account.split("|")[0]
-        querytype = account.split("|")[1]
-        cnt = int(querytime.split("|")[1])
-        querytime_str = querytime.split("|")[0]
-        reqid = self.order_querytime_reqid[querytime_str]
-        
-        typequerydict = {
-            "normal": self.query_order_dict,
-            "rzrq": self.query_rzrq_order_dict,
-            "ggt": self.query_ggt_order_dict,
-        }
-        
-        typecolumn = {
-            "normal": ['insert_time', 'symbol', 'symbol_name', 'market_name', 'operation_msg', 'price', 'AvgPx', 'quantity', 'trade_amount', 
-                'avg_price', 'order_no', 'order_status_msg', 'order_type_msg', 'currency', 'message',
-                'OrderEntryTime', 'MarketName', 'Symbol', 'SecurityID', 'Price', 'OrderQty', 'Side', 'AvgPx', 'TradeVolume', 
-                'OrderID', 'OperationMsg', 'Distribution', 'OrderStatusMsg', 'OrdType', 'OrderStatus2946'],
-            "rzrq": ['OrderEntryTime', 'MarketName', 'Symbol', 'SecurityID', 'Price', 'OrderQty', 'Side', 'AvgPx', 'TradeVolume', 
-                'OrderID', 'OperationMsg', 'Distribution', 'OrderStatusMsg', 'OrdType', 'OrderStatus2946'],
-            "ggt": ['OrderTime', 'Market', 'MarketName', 'SecurityID', 'SecurityName', 'OrderPrice', 'OrderQty', 'Side', 'AvgPx',
-                'TradeVolume', 'OrderID', 'OperationMsg', 'OrderStatusMsg'],
-        }
-        
-        typecolumnrename = {
-            "normal": {"symbol": "security", "symbol_name": "symbol", "trade_amount": "trade", "order_status_msg": "status",
-                "order_type_msg": "type", "avg_price": "avg", "operation_msg": "op", "market_name": "market"},
-            "rzrq": {},
-            "ggt": {"SecurityID": "Security", "SecurityName": "Symbol", "OrderPrice": "Price", "TradeVolume": "Volume"},
-        }
-        
-        print(f"fund: {fund}")
-        print(f"querytype: {querytype}")
-        print(f"req_id: {reqid}")
-        
-        if cnt == 0:
-            print("本次委托查询结果为空")
-        else:
-            querydata = typequerydict[querytype][fund][f"{querytime_str}|{reqid}"]
-            df_queryorder = pd.DataFrame(querydata, columns=typecolumn[querytype])
-            df_queryorder.rename(columns=typecolumnrename[querytype], inplace=True)
-            df_queryorder = df_queryorder.dropna(axis=1, how='all')
-            
-            if not df_queryorder.empty:
-                print(df_queryorder)
-    
+
     def get_order_query_data(self) -> Dict[str, Dict[str, Dict[str, pd.DataFrame]]]:
         """
         获取委托查询数据
@@ -388,20 +334,6 @@ class OrderProcessor:
                     all_data_dict['ggt'].setdefault(fundtoken, {})[timestamp] = pd.DataFrame()
         
         return all_data_dict
-    
-    def show_queryorder_summary(self, account):
-        fund = account.split("|")[0]
-        querytype = account.split("|")[1]
-        typequerydict = {
-            "normal":self.query_order_dict,
-            "rzrq":self.query_rzrq_order_dict,
-            "ggt":self.query_ggt_order_dict,
-        }
-        print("\n统计单账户查询请求返回行数")
-        print("查询账号：", account, '\n')
-        for query_time, querydata in typequerydict[querytype][fund].items():
-            print(query_time, len(querydata))
-
     def get_order_summary(self) -> Dict[str, Any]:
         """
         获取委托查询汇总信息
@@ -427,51 +359,3 @@ class OrderProcessor:
             ))
         }
     
-    def show_order_summary(self) -> None:
-        """
-        显示委托查询汇总信息
-        """
-        summary = self.get_order_summary()
-        
-        print("\n=== 委托查询汇总 ===")
-        print(f"普通账户数: {summary['normal_accounts']}")
-        print(f"信用账户数: {summary['rzrq_accounts']}")
-        print(f"港股通账户数: {summary['ggt_accounts']}")
-        print(f"普通查询总数: {summary['total_normal_queries']}")
-        print(f"信用查询总数: {summary['total_rzrq_queries']}")
-        print(f"港股通查询总数: {summary['total_ggt_queries']}")
-        print(f"所有账户: {summary['all_accounts']}")
-        print("=" * 30) 
-
-    def show_queryorder_all(self):
-        # 按时间戳统计查询条数
-        print("\n根据时间统计查询行数\n")
-        column_index = set()
-        row_index = set()
-        typequerydict = {
-            "normal":self.query_order_dict,
-            "rzrq":self.query_rzrq_order_dict,
-            "ggt":self.query_ggt_order_dict,
-        }
-        for querytype, querydict in typequerydict.items():
-            for fundkey, fundquerydata in querydict.items():
-                for timekey, querydata in fundquerydata.items():
-                    timestamp = timekey.split(' ')[1].split('.')[0]
-                    column_index.add("%s|%s" % (fundkey, querytype))
-                    row_index.add(timestamp)
-        column_index = list(column_index)
-        row_index = sorted(list(row_index))
-        
-        df = pd.DataFrame(index=row_index, columns=column_index)
-        for querytype, querydict in typequerydict.items():
-            for fundkey, fundquerydata in querydict.items():
-                for timekey, querydata in fundquerydata.items():
-                    timestamp = timekey.split(' ')[1].split('.')[0]
-                    df.loc[timestamp, "%s|%s" % (fundkey, querytype)] = len(querydata)
-        df = df.fillna(0)
-        df = df.loc[:, (df != 0).any(axis=0)]
-        df['total'] = df.sum(axis=1)
-        cols = df.columns.tolist()
-        cols = cols[-1:] + cols[:-1]  # 将 'total' 列移到最前面
-        df = df[cols]
-        display(df)

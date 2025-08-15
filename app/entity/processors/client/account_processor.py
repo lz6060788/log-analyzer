@@ -8,7 +8,7 @@ import re
 from typing import Dict, List, Any, Optional
 import pandas as pd
 
-from .models import AccountInfo, ProcessingState, RequestPairsDict
+from .models import ProcessingState, RequestPairsDict
 
 
 class AccountProcessor:

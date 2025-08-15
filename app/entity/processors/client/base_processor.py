@@ -5,9 +5,7 @@
 
 import json
 import traceback
-import re
 from typing import Dict, List, Any, Optional, Union, Tuple
-from datetime import datetime
 
 from .models import (
     RequestPair, ProcessingConfig, ProcessingState, 
@@ -401,29 +399,6 @@ class BaseProcessor:
                 return []
         else:
             return []
-
-    def show_request_and_response(self, req_id: str, isfullreqs: bool = True) -> None:
-        """
-        显示请求和响应
-        
-        Args:
-            req_id: 请求ID
-            isfullreqs: 是否显示完整请求
-        """
-        item = self.req_pairs[req_id]
-        request = item["request"]
-        response = item["response"]
-        req_time = item["req_time"]
-        rsp_time = item["rsp_time"]
-        
-        print("request %s %s" % (req_time, self.format_size(len(json.dumps(request)))))
-        if isfullreqs:
-            print(json.dumps(request))
-        print("-"*100)
-        print("response %s %s" % (rsp_time, self.format_size(len(json.dumps(response)))))
-        if isfullreqs:
-            print(json.dumps(response))
-        print("-"*100) 
     
     def get_request_and_response(self, req_id: str) -> Dict[str, Any]:
         """

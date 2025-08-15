@@ -3,7 +3,6 @@
 负责融资融券相关的日志解析、数据处理与展示
 """
 from typing import Dict, List, Any, Optional
-import pandas as pd
 from .models import ProcessingState, RequestPairsDict
 
 class FinancingProcessor:
@@ -90,48 +89,6 @@ class FinancingProcessor:
         if not sorted_querytime_list:
             sorted_querytime_list.append("空")
         return sorted_querytime_list 
-
-    # Jupyter友好型接口
-    def show_finable_security(self, fund_key: str, query_time: str, show_securities: bool = False, stock_code: str = "") -> None:
-        """
-        展示可融资标的券信息（Jupyter友好）
-        """
-        if query_time != "空":
-            querytime = query_time.split('|')[0]
-            reqid = self.finable_querytime_reqid.get(querytime, "")
-            print("查询账户", fund_key)
-            print("查询时间", querytime)
-            print("req_id", reqid, '\n')
-            if stock_code == "":
-                query_data = self.finable_security_dict[fund_key][query_time]
-                market_dict = {}
-                for data in query_data:
-                    market = data.get("MarketID", "")
-                    security = data.get("SecurityID", "")
-                    market_name = data.get("MarketName", "")
-                    index = f'{market_name}:{market}'
-                    if index not in market_dict:
-                        market_dict[index] = []
-                    market_dict[index].append(security)
-                for index, security_list in market_dict.items():
-                    print(index, "股票数：" + str(len(security_list)))
-                    if show_securities:
-                        print(security_list)
-            else:
-                is_finded = False
-                query_data = self.finable_security_dict[fund_key][query_time]
-                for data in query_data:
-                    market = data.get("MarketID", "")
-                    security = data.get("SecurityID", "")
-                    if security == stock_code:
-                        display(pd.DataFrame([data]))
-                        is_finded = True
-                if not is_finded:
-                    print(f"证券代码 {stock_code} 不在可融资股票列表之中")
-        df = pd.DataFrame(self.finable_security_failed, columns=["rsp_time", "fund", "req_id", "code", "message"])
-        df = df[df["fund"] == fund_key]
-        print("\n失败查询请求", fund_key)
-        display(df)
 
     # Web友好型接口
     def get_finable_security_data(self, fund_key: Optional[str] = None) -> Dict[str, Any]:
