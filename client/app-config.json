@@ -1,0 +1,19 @@
+{
+  "app": {
+    "name": "Log Analyzer",
+    "version": "1.0.0",
+    "flask_version": "1.0.0",
+    "code_hash": "current_hash",
+    "update_server": "http://127.0.0.1:5000"
+  },
+  "update": {
+    "check_on_startup": true,
+    "auto_download": false,
+    "check_interval": 0
+  },
+  "flask": {
+    "port": 5000,
+    "host": "127.0.0.1",
+    "timeout": 30000
+  }
+}

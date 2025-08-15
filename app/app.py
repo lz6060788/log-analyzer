@@ -1,9 +1,26 @@
+import os
+import sys
+
+# 设置环境变量解决Windows控制台编码问题
+os.environ['PYTHONIOENCODING'] = 'utf-8'
+
+# 强制设置控制台编码
+if sys.platform == 'win32':
+    try:
+        import codecs
+        sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
+        sys.stderr = codecs.getwriter('utf-8')(sys.stderr.detach())
+    except:
+        pass
+
 from flask import Flask, render_template, session, jsonify, send_from_directory, request
 from flask_session import Session
 from api.log.routes import log_bp
 from utils.request import CustomJSONEncoder
-import os
 import mimetypes
+from api.updates.routes import updates_bp
+from pathlib import Path
+import json
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 
@@ -57,10 +74,16 @@ Session(app)
 # 健康检查路由
 @app.route('/readiness')
 def health_check():
-    return jsonify({'status': 'healthy', 'message': 'Log Analyzer is running'})
+    return jsonify({
+        'status': 'healthy', 
+        'message': 'Log Analyzer is running'
+    })
 
 # 路由配置
 app.register_blueprint(log_bp)
+app.register_blueprint(updates_bp)  # 添加更新路由
 
 if __name__ == '__main__':
+    print("🚀 启动Log Analyzer...")
+    print("🌐 启动Flask服务器...")
     app.run(debug=True, host='0.0.0.0', port=5000)

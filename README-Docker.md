@@ -37,9 +37,9 @@ docker-compose up -d --build
 ### 2. 访问应用
 
 应用启动后，可以通过以下地址访问：
-- 主页：http://localhost:5000
-- 客户端日志：http://localhost:5000/log/client
-- 操作日志：http://localhost:5000/log/operation
+- 主页：http://127.0.0.1:5000
+- 客户端日志：http://127.0.0.1:5000/log/client
+- 操作日志：http://127.0.0.1:5000/log/operation
 
 ### 3. 停止应用
 
