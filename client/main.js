@@ -311,7 +311,7 @@ function waitForFlaskApp() {
           }
         });
     };
-    
+
     checkFlask();
   });
 }
