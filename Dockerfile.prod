@@ -1,3 +1,35 @@
+# 多阶段构建：第一阶段 - 构建Flask程序
+FROM mcr.microsoft.com/windows/servercore:ltsc2025 AS flask-builder
+
+# 设置工作目录
+WORKDIR C:\\app
+
+# 复制依赖文件
+COPY requirements.txt .
+COPY app/ ./app/
+COPY scripts/ ./scripts/
+
+# 安装Python依赖
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt && \
+    pip install pyinstaller
+
+# 构建Flask程序
+RUN python -m PyInstaller app\\build_flask.spec --distpath static\\updates --workpath client\\build\\flask-work
+
+# 第二阶段 - 构建前端程序
+FROM node:18-alpine AS frontend-builder
+
+WORKDIR /app
+
+# 复制前端代码
+COPY frontend/package*.json ./
+COPY frontend/ ./
+
+# 安装依赖并构建
+RUN npm i && npm run build
+
+# 第三阶段 - 最终运行镜像
 FROM hub-dev.hexin.cn:9544/business-baseimage-python/python:v3.11.12
 
 # 设置工作目录
@@ -17,18 +49,21 @@ RUN apt-get update && apt-get install -y \
 
 # 复制requirements.txt文件
 COPY requirements.txt .
-# 复制应用代码
-COPY app/ ./app/
-COPY static/ ./static/
-COPY scripts/ ./scripts/
 
 # 安装Python依赖
 RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir gunicorn && \
-    bash ./scripts/build_flask_for_electron.sh && \
+    pip install --no-cache-dir gunicorn
+
+# 从构建阶段复制预构建的文件
+COPY --from=flask-builder /app/static/updates ./static/updates
+COPY --from=frontend-builder /app/dist ./static
+
+# 复制应用代码
+COPY app/ ./app/
+
 # 创建session存储目录
-    mkdir -p /app/flask_session && \
-# 创建非root用户
+RUN mkdir -p /app/flask_session && \
+    # 创建非root用户
     adduser --disabled-password --gecos '' appuser && \
     chown -R appuser:appuser /app
 
