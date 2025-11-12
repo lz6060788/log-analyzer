@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Python环境检查</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background-color: #f0f2f5;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+    }
+    .status-title {
+      text-align: center;
+      color: #1a73e8;
+      margin-bottom: 1.5rem;
+    }
+    .status-item {
+      margin: 1rem 0;
+      padding: 0.8rem;
+      border-radius: 4px;
+      background-color: #f8f9fa;
+    }
+    .status-item h3 {
+      margin: 0 0 0.5rem 0;
+      color: #202124;
+    }
+    .status-value {
+      color: #5f6368;
+    }
+    .dependency-list {
+      list-style-type: none;
+      padding: 0;
+    }
+    .dependency-item {
+      padding: 0.3rem 0;
+      border-bottom: 1px solid #eee;
+    }
+    .dependency-installed {
+      color: #137333;
+    }
+    .dependency-missing {
+      color: #d93025;
+    }
+    .dependency-installing {
+      color: #fbbc04;
+    }
+    .error-message {
+      color: #d93025;
+      padding: 1rem;
+      background-color: #fce8e6;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .progress-container {
+      width: 100%;
+      height: 8px;
+      background-color: #eee;
+      border-radius: 4px;
+      margin: 1rem 0;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background-color: #1a73e8;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="status-title">环境检查中...</h1>
+    
+    <div class="status-item">
+      <h3>Python环境</h3>
+      <div class="status-value" id="python-status">检查中...</div>
+    </div>
+    
+    <div class="status-item">
+      <h3>Python版本</h3>
+      <div class="status-value" id="python-version">未知</div>
+    </div>
+    
+    <div class="status-item">
+      <h3>依赖检查</h3>
+      <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <ul class="dependency-list" id="dependency-list">
+        <!-- 依赖项将在这里动态添加 -->
+      </ul>
+    </div>
+    
+    <div class="error-message" id="error-message" style="display: none;"></div>
+  </div>
+
+  <script>
+    // 状态更新处理函数
+    function updateStatus(status) {
+      document.querySelector('.status-title').textContent = getStatusText(status.overallStatus);
+      
+      // 更新Python状态
+      const pythonStatusEl = document.getElementById('python-status');
+      pythonStatusEl.textContent = status.hasPython ? '已安装' : '未安装';
+      pythonStatusEl.style.color = status.hasPython ? '#137333' : '#d93025';
+      
+      // 更新Python版本
+      document.getElementById('python-version').textContent = status.pythonVersion || '未知';
+      
+      // 更新依赖列表
+      const dependencyListEl = document.getElementById('dependency-list');
+      dependencyListEl.innerHTML = '';
+      
+      // 添加已安装的依赖
+      status.dependencies.installed.forEach(dep => {
+        const li = document.createElement('li');
+        li.className = 'dependency-item dependency-installed';
+        li.textContent = `${dep} - 已安装`;
+        dependencyListEl.appendChild(li);
+      });
+      
+      // 添加缺失的依赖
+      status.dependencies.missing.forEach(dep => {
+        const li = document.createElement('li');
+        li.className = 'dependency-item dependency-missing';
+        li.textContent = `${dep} - 缺失`;
+        dependencyListEl.appendChild(li);
+      });
+      
+      // 添加正在安装的依赖
+      status.dependencies.installing.forEach(dep => {
+        const li = document.createElement('li');
+        li.className = 'dependency-item dependency-installing';
+        li.textContent = `${dep} - 安装中...`;
+        dependencyListEl.appendChild(li);
+      });
+      
+      // 更新进度条
+      const totalDeps = 
+        status.dependencies.installed.length + 
+        status.dependencies.missing.length +
+        status.dependencies.installing.length;
+      
+      if (totalDeps > 0) {
+        const progress = (status.dependencies.installed.length / totalDeps) * 100;
+        document.getElementById('progress-bar').style.width = `${progress}%`;
+      }
+      
+      // 显示错误信息
+      const errorEl = document.getElementById('error-message');
+      if (status.error) {
+        errorEl.textContent = status.error;
+        errorEl.style.display = 'block';
+      } else {
+        errorEl.style.display = 'none';
+      }
+    }
+    
+    // 获取状态文本
+    function getStatusText(status) {
+      const statusTexts = {
+        'initializing': '初始化中...',
+        'checking': '正在检查环境...',
+        'installing': '正在安装依赖...',
+        'ready': '环境准备就绪',
+        'error': '检查失败'
+      };
+      return statusTexts[status] || status;
+    }
+    
+    // 监听状态更新
+    window.electronAPI.onPythonStatusUpdate(updateStatus);
+    
+    // 初始获取状态
+    window.electronAPI.getPythonStatus().then(updateStatus);
+  </script>
+</body>
+</html>

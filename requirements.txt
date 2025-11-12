@@ -1,21 +1,13 @@
 # Flask application core dependencies
 flask==2.3.3
-flask_session==0.8.0
-flask_cors==4.0.0
+flask-session==0.8.0
 
 # Data processing dependencies
-pandas==2.1.4
-numpy==1.24.3
+pandas==1.5.0
+numpy==1.23.3
 
 # Web framework dependencies
-Werkzeug==2.3.7
-
-# Git operation dependencies
-GitPython==3.1.40
-
-# Build and packaging dependencies
-pyinstaller==6.3.0
-pyinstaller-hooks-contrib==2024.0
+werkzeug==2.3.7
 
 # Development tool dependencies
-python-dotenv==1.0.0
+python-dotenv==0.21.0

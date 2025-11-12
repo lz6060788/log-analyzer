@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import DefaultLayout from '@/layout/default.vue'
 import HomeView from '@/views/HomeView.vue'
 // @ts-ignore
@@ -9,7 +9,7 @@ import LogPasteView from '@/views/LogPasteView.vue'
 import LogPoolView from '@/views/LogPoolView.vue'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',

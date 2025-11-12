@@ -182,15 +182,6 @@ class AlgorithmProcessor:
         df_algorithm_push = pd.DataFrame(push_data, columns = dict_pushtype_keep_columns[push_type])
         return df_algorithm_push.to_dict(orient="records")
 
-    # Jupyter友好型方法
-    def show_queryalgorithm(self, querytime: str) -> None:
-        """
-        Jupyter友好：展示算法单查询结果
-        """
-        df = self.query_algorithm_df.get(querytime, pd.DataFrame())
-        print(f"算法单查询结果（{querytime}）：")
-        display(df)
-
     # 仅为原先只有展示型方法的部分新增web友好型接口
     def get_algorithm_query_data(self) -> List[Dict[str, Any]]:
         """

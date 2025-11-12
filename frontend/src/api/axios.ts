@@ -32,10 +32,6 @@ apiClient.interceptors.request.use(
 // 响应拦截器
 apiClient.interceptors.response.use(
   response => {
-    console.log('Axios响应拦截器 - 原始响应:', response);
-    console.log('Axios响应拦截器 - response.data类型:', typeof response.data);
-    console.log('Axios响应拦截器 - response.data内容:', response.data);
-    console.log('Axios响应拦截器 - Content-Type:', response.headers['content-type']);
     return response.data;
   },
   error => {

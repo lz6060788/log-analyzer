@@ -4,7 +4,6 @@
 """
 
 from typing import Dict, List, Any, Optional
-import pandas as pd
 
 from .models import ProcessingState, RequestPairsDict
 
@@ -117,33 +116,6 @@ class IPOProcessor:
         fund_list = list(set([item["fund"] for item in self.ipo_query_list]))
         fund_list.insert(0, "全部")
         return fund_list
-
-    def show_ipo_query(self, fund: str = "全部", show_summary: bool = False) -> None:
-        """
-        展示新股申购额度信息
-        """
-        bFilter = True
-        if fund == "全部":
-            bFilter = False
-            if not show_summary:
-                print("显示全部账户新股申购配售额度信息")
-        else:
-            print(f"显示账户[{fund}]新股申购配售额度信息")
-        unique_fund_list = list(set([item["fund"] for item in self.ipo_query_list]))
-        list_summary = []
-        for fund_key in unique_fund_list:
-            if show_summary:
-                querydata = [item for item in self.ipo_query_list if item["fund"] == fund_key]
-                list_summary.append({"fund": fund_key, "query": len(querydata)})
-            else:
-                if not bFilter or (bFilter and (fund in fund_key)):
-                    print('\n')
-                    querydata = [item for item in self.ipo_query_list if item["fund"] == fund_key]
-                    print(fund_key, len(querydata))
-                    print(pd.DataFrame(querydata))
-        if show_summary:
-            print(pd.DataFrame(list_summary).sort_values(by="fund"))
-
     def handle_ipo_lottery_query(self) -> List[str]:
         """
         处理新股中签明细查询，返回账户列表
@@ -151,33 +123,6 @@ class IPOProcessor:
         fund_list = list(set([item["fund"] for item in self.ipo_lottery_list]))
         fund_list.insert(0, "全部")
         return fund_list
-
-    def show_ipo_lottery_query(self, fund: str = "全部", show_summary: bool = False) -> None:
-        """
-        展示新股中签明细信息
-        """
-        bFilter = True
-        if fund == "全部":
-            bFilter = False
-            if not show_summary:
-                print("显示全部账户新股中签明细信息")
-        else:
-            print(f"显示账户[{fund}]新股中签明细信息")
-        unique_fund_list = list(set([item["fund"] for item in self.ipo_lottery_list]))
-        list_summary = []
-        for fund_key in unique_fund_list:
-            if show_summary:
-                querydata = [item for item in self.ipo_lottery_list if item["fund"] == fund_key]
-                list_summary.append({"fund": fund_key, "query": len(querydata)})
-            else:
-                if not bFilter or (bFilter and (fund in fund_key)):
-                    print('\n')
-                    querydata = [item for item in self.ipo_lottery_list if item["fund"] == fund_key]
-                    print(fund_key, len(querydata))
-                    print(pd.DataFrame(querydata))
-        if show_summary:
-            print(pd.DataFrame(list_summary).sort_values(by="fund"))
-
     def get_ipo_query_data(self, fund: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         获取新股申购额度数据，适合web接口返回

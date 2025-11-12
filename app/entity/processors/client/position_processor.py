@@ -3,7 +3,6 @@
 负责持仓信息查询和处理
 """
 
-import json
 from typing import Dict, List, Any, Optional
 import pandas as pd
 from datetime import datetime
@@ -231,56 +230,6 @@ class PositionProcessor:
             )
         ]
         return sorted_querytime_list
-    
-    def show_queryposition(self, account: str, querytime: str) -> None:
-        """
-        显示持仓查询结果
-        
-        Args:
-            account: 账户信息
-            querytime: 查询时间
-        """
-        fund = account.split("|")[0]
-        querytype = account.split("|")[1]
-        cnt = int(querytime.split("|")[1])
-        querytime_str = querytime.split("|")[0]
-        reqid = self.position_querytime_reqid[querytime_str]
-        
-        typequerydict = {
-            "normal": self.query_account_stock_dict,
-            "rzrq": self.query_rzrq_account_stock_dict,
-            "ggt": self.query_ggt_account_stock_dict,
-        }
-        
-        typecolumn = {
-            "normal": ['security_id', 'security_name', 'actual_amt', 'available_purchase_amt', 'available_stock_balance',
-                'cost_price', 'frozen_qty', 'market', 'market_name', 'market_price', 'market_value', 'stock_balance', 'yield'],
-            "rzrq": ['SecurityID', 'SecurityName', 'AccountSecPosition', 'AvailableAmt', 'CostPrice', 'FrozenAmt', "Market",
-                'MarketName', 'MarketPrice', 'MarketValue', 'StockBalance', 'Yield'],
-            "ggt": ['SecurityID', 'SecurityName', 'AvailableStockBalance', 'ActualAmt', 'StockBalance', 'FrozenQty',
-                'CostPrice', "Market", 'MarketName', 'MarketPrice', 'MarketValue', 'Yield'],
-        }
-        
-        typecolumnrename = {
-            "normal": {"available_purchase_amt": "avail_purch", "available_stock_balance": "avail_amt", "security_id": "security", "security_name": "symbol"},
-            "rzrq": {"AccountSecPosition": "ActualAmt"},
-            "ggt": {"SecurityID": "Security", "SecurityName": "Symbol", "AvailableStockBalance": "Available", "Market": "market", "MarketName": "Market"},
-        }
-        
-        print(f"fund: {fund}")
-        print(f"querytype: {querytype}")
-        print(f"req_id: {reqid}")
-        
-        if cnt == 0:
-            print("本次持仓查询结果为空")
-        else:
-            querydata = typequerydict[querytype][fund][f"{querytime_str}|{reqid}"]
-            df_account_stock = pd.DataFrame(querydata, columns=typecolumn[querytype])
-            df_account_stock.rename(columns=typecolumnrename[querytype], inplace=True)
-            
-            if not df_account_stock.empty:
-                print(df_account_stock)
-    
     def get_position_query_data(self) -> Dict[str, Dict[str, Dict[str, pd.DataFrame]]]:
         """
         获取持仓查询数据

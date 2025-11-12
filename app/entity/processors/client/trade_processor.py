@@ -3,7 +3,6 @@
 负责成交记录查询和处理
 """
 
-import json
 from typing import Dict, List, Any, Optional
 import pandas as pd
 from datetime import datetime
@@ -240,137 +239,7 @@ class TradeProcessor:
             )
         ]
         return sorted_querytime_list
-    
-    def show_querytrade(self, account: str, querytime: str, code: str = "") -> None:
-        """
-        显示成交查询结果
-        
-        Args:
-            account: 账户信息
-            querytime: 查询时间
-            code: 股票代码过滤
-        """
-        fund = account.split("|")[0]
-        querytype = account.split("|")[1]
-        cnt = int(querytime.split("|")[1])
-        querytime_str = querytime.split("|")[0]
-        reqid = self.trade_querytime_reqid[querytime_str]
-        
-        typequerydict = {
-            "normal": self.query_trade_dict,
-            "rzrq": self.query_rzrq_trade_dict,
-            "ggt": self.query_ggt_trade_dict,
-        }
-        
-        typecolumn = {
-            "normal": ['trade_time', 'order_no', 'symbol', 'symbol_name', 'market_name', 'price', 'quantity', 'trade_amount', 
-                'order_type_msg', 'operation_msg', 'currency', 'currency_msg', "shareholder_account", 'message'],
-            "rzrq": ['TransactTime', 'MarketName', 'Symbol', 'SecurityID', 'Price', 'OperationMsg', 'Side', 'AvgPx', 'BusinessAmount', 
-                'GrossTradeAmt', 'OrderID', 'OrdType', 'TradeVolume', 'OrderStatus', 'OperationMsg', 'Distribution'],
-            "ggt": ['TransactTime', 'MarketName', 'SecurityID', 'SecurityName', 'Price', 'OperationMsg', 'Side', 'AvgPx', 
-                'BusinessAmount', 'GrossTradeAmt', 'OrderID', 'OrdType', 'TradeVolume', 'TradeStatus', 'Distribution'],
-        }
-        
-        typecolumnrename = {
-            "normal": {"symbol": "SecurityID", "symbol_name": "Symbol", "trade_amount": "trade", "order_type_msg": "type", 
-                "operation_msg": "op", "market_name": "market", "currency_msg": "currency2", "shareholder_account": "gdzh"},
-            "rzrq": {},
-            "ggt": {"SecurityName": "Symbol"},
-        }
-        
-        print(f"fund: {fund}")
-        print(f"querytype: {querytype}")
-        print(f"req_id: {reqid}")
-        print(f"filter_stockcode: {code}")
-        
-        if cnt == 0:
-            print("本次成交查询结果为空")
-        elif cnt < 0:
-            print("\n本次查询请求出错")
-            querydata = typequerydict[querytype][fund][f"{querytime_str}|{reqid}"]
-            print(querydata)
-        else:
-            querydata = typequerydict[querytype][fund][f"{querytime_str}|{reqid}"]
-            df_querytrade = pd.DataFrame(querydata, columns=typecolumn[querytype])
-            df_querytrade.rename(columns=typecolumnrename[querytype], inplace=True)
-            df_querytrade = df_querytrade.dropna(axis=1, how='all')
-            
-            if code != "":
-                df = df_querytrade[df_querytrade["SecurityID"] == code]
-                if not df.empty:
-                    print(df)
-                else:
-                    print(f"未找到股票代码 {code} 的成交记录")
-            else:
-                if not df_querytrade.empty:
-                    print(df_querytrade)
-    
-    def show_querytrade_summary(self, account: str) -> None:
-        """
-        显示成交查询汇总
-        
-        Args:
-            account: 账户信息
-        """
-        fund = account.split("|")[0]
-        querytype = account.split("|")[1]
-        
-        typequerydict = {
-            "normal": self.query_trade_dict,
-            "rzrq": self.query_rzrq_trade_dict,
-            "ggt": self.query_ggt_trade_dict,
-        }
-        
-        print("\n统计单账户查询请求返回行数")
-        print(f"查询账号：{account}\n")
-        
-        for query_time, querydata in typequerydict[querytype][fund].items():
-            print(f"{query_time} {len(querydata)}")
-    
-    def show_querytrade_all(self) -> None:
-        """
-        显示所有成交查询汇总
-        """
-        print("\n根据时间统计查询行数\n")
-        column_index = set()
-        row_index = set()
-        
-        typequerydict = {
-            "normal": self.query_trade_dict,
-            "rzrq": self.query_rzrq_trade_dict,
-            "ggt": self.query_ggt_trade_dict,
-        }
-        
-        for querytype, querydict in typequerydict.items():
-            for fundkey, fundquerydata in querydict.items():
-                for timekey, querydata in fundquerydata.items():
-                    timestamp = timekey.split(' ')[1].split('.')[0]
-                    column_index.add(f"{fundkey}|{querytype}")
-                    row_index.add(timestamp)
-        
-        column_index = list(column_index)
-        row_index = sorted(list(row_index))
-        
-        df = pd.DataFrame(index=row_index, columns=column_index)
-        
-        for querytype, querydict in typequerydict.items():
-            for fundkey, fundquerydata in querydict.items():
-                for timekey, querydata in fundquerydata.items():
-                    timestamp = timekey.split(' ')[1].split('.')[0]
-                    df.loc[timestamp, f"{fundkey}|{querytype}"] = len(querydata)
-        
-        df = df.fillna(0)
-        df = df.loc[:, (df != 0).any(axis=0)]
-        df['total'] = df.sum(axis=1)
-        cols = df.columns.tolist()
-        cols = cols[-1:] + cols[:-1]  # 将 'total' 列移到最前面
-        df = df[cols]
-        
-        if not df.empty:
-            print(df)
-        else:
-            print("暂无成交查询数据")
-    
+
     def get_trade_query_data(self) -> Dict[str, Dict[str, Dict[str, pd.DataFrame]]]:
         """
         获取成交查询数据

@@ -6,7 +6,7 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder",
-    "build:win": "electron-builder --win",
+    "build:win": "electron-builder --win --no-cache",
     "build:mac": "electron-builder --mac",
     "build:linux": "electron-builder --linux",
     "postinstall": "electron-builder install-app-deps"
@@ -24,9 +24,9 @@
     "electron-builder": "^24.9.1"
   },
   "dependencies": {
-    "adm-zip": "^0.5.16",
     "axios": "^1.6.0",
-    "electron-updater": "^6.1.7"
+    "electron-updater": "^6.1.7",
+    "extract-zip": "^2.0.1"
   },
   "build": {
     "appId": "com.loganalyzer.client",
@@ -41,8 +41,8 @@
     ],
     "extraResources": [
       {
-        "from": "../static/updates",
-        "to": "flask"
+        "from": "../requirements.txt",
+        "to": "requirements.txt"
       }
     ],
     "asar": false,

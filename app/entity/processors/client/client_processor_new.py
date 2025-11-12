@@ -13,7 +13,6 @@ from .fund_processor import FundProcessor
 from .position_processor import PositionProcessor
 from .order_processor import OrderProcessor
 from .trade_processor import TradeProcessor
-from .models import ProcessingState, RequestPairsDict
 from .ipo_processor import IPOProcessor
 from .basket_processor import BasketProcessor
 from .algorithm_processor import AlgorithmProcessor
@@ -178,16 +177,6 @@ class ClientProcessorNew:
         """
         return self.base_processor.get_request_list(protocol, servicename, cmd)
     
-    def show_request_and_response(self, req_id: str, isfullreqs: bool = True) -> None:
-        """
-        显示请求和响应
-        
-        Args:
-            req_id: 请求ID
-            isfullreqs: 是否显示完整请求
-        """
-        self.base_processor.show_request_and_response(req_id, isfullreqs)
-    
     def get_all_accounts(self) -> List[str]:
         """
         获取所有账户列表
@@ -259,16 +248,6 @@ class ClientProcessorNew:
         """
         return self.order_processor.handle_order_query()
     
-    # 资金查询相关方法
-    def show_fund_query(self, fund_key: str) -> None:
-        """
-        显示资金查询结果
-        
-        Args:
-            fund_key: 资金账户键值
-        """
-        self.fund_processor.show_fund_query(fund_key)
-    
     def get_fund_query_data(self) -> Dict[str, Dict[str, pd.DataFrame]]:
         """
         获取资金查询数据
@@ -290,16 +269,6 @@ class ClientProcessorNew:
             查询时间列表
         """
         return self.position_processor.get_position_querytime(fundkey)
-    
-    def show_queryposition(self, account: str, querytime: str) -> None:
-        """
-        显示持仓查询结果
-        
-        Args:
-            account: 账户信息
-            querytime: 查询时间
-        """
-        self.position_processor.show_queryposition(account, querytime)
     
     def get_position_query_data(self) -> Dict[str, Dict[str, Dict[str, pd.DataFrame]]]:
         """
@@ -332,16 +301,6 @@ class ClientProcessorNew:
         """
         return self.order_processor.get_order_querytime(fundkey)
     
-    def show_queryorder(self, account: str, querytime: str) -> None:
-        """
-        显示委托查询结果
-        
-        Args:
-            account: 账户信息
-            querytime: 查询时间
-        """
-        self.order_processor.show_queryorder(account, querytime)
-    
     def get_order_query_data(self) -> Dict[str, Dict[str, Dict[str, pd.DataFrame]]]:
         """
         获取委托查询数据
@@ -350,13 +309,6 @@ class ClientProcessorNew:
             委托查询数据字典
         """
         return self.order_processor.get_order_query_data()
-
-    def show_queryorder_summary(self, account: str):
-        self.order_processor.show_queryorder_summary(account)
-
-    def show_queryorder_all(self):
-        self.order_processor.show_queryorder_all()
-
     def get_order_summary(self):
         return self.order_processor.get_order_summary()
 
@@ -381,33 +333,7 @@ class ClientProcessorNew:
             查询时间列表
         """
         return self.trade_processor.get_trade_querytime(fundkey)
-    
-    def show_querytrade(self, account: str, querytime: str, code: str = "") -> None:
-        """
-        显示成交查询结果
-        
-        Args:
-            account: 账户信息
-            querytime: 查询时间
-            code: 股票代码过滤
-        """
-        self.trade_processor.show_querytrade(account, querytime, code)
-    
-    def show_querytrade_summary(self, account: str) -> None:
-        """
-        显示成交查询汇总
-        
-        Args:
-            account: 账户信息
-        """
-        self.trade_processor.show_querytrade_summary(account)
-    
-    def show_querytrade_all(self) -> None:
-        """
-        显示所有成交查询汇总
-        """
-        self.trade_processor.show_querytrade_all()
-    
+
     def get_trade_query_data(self) -> Dict[str, Dict[str, Dict[str, pd.DataFrame]]]:
         """
         获取成交查询数据
@@ -430,16 +356,6 @@ class ClientProcessorNew:
         """
         return self.ipo_processor.handle_ipo_query()
 
-    def show_ipo_query(self, fund: str = "全部", show_summary: bool = False) -> None:
-        """
-        显示新股申购额度查询结果
-        
-        Args:
-            fund: 资金账户（默认全部）
-            show_summary: 是否显示汇总
-        """
-        self.ipo_processor.show_ipo_query(fund, show_summary)
-
     def handle_ipo_lottery_query(self) -> List[str]:
         """
         处理新股中签明细查询，返回账户列表
@@ -448,16 +364,6 @@ class ClientProcessorNew:
             账户列表
         """
         return self.ipo_processor.handle_ipo_lottery_query()
-
-    def show_ipo_lottery_query(self, fund: str = "全部", show_summary: bool = False) -> None:
-        """
-        显示新股中签明细查询结果
-        
-        Args:
-            fund: 资金账户（默认全部）
-            show_summary: 是否显示汇总
-        """
-        self.ipo_processor.show_ipo_lottery_query(fund, show_summary) 
 
     def get_ipo_query_data(self, fund: Optional[str] = None) -> List[Dict[str, Any]]:
         """
@@ -512,60 +418,6 @@ class ClientProcessorNew:
             篮子订单明细列表
         """
         return self.basket_processor.get_basketorder_detail_data(instanceid)
-
-    def show_basket_summary(self, source: str = "全部", fund: str = "", stockcode: str = "", showorders: bool = False) -> None:
-        """
-        显示篮子订单汇总信息
-        
-        Args:
-            source: 订单来源类型
-            fund: 资金账户
-            stockcode: 股票代码
-            showorders: 是否显示子单明细
-        """
-        self.basket_processor.show_basket_summary(source, fund, stockcode, showorders)
-
-    def show_basket_instance_detail(self, instanceid: str, fund: str = "", stockcode: str = "") -> None:
-        """
-        显示指定母单的参数详情
-        
-        Args:
-            instanceid: 母单ID
-            fund: 资金账户
-            stockcode: 股票代码
-        """
-        self.basket_processor.show_basket_instance_detail(instanceid, fund, stockcode)
-
-    def show_basket_order_detail(self, instanceid: str, fund: str = "", stockcode: str = "") -> None:
-        """
-        显示指定母单的全部子单详情
-        
-        Args:
-            instanceid: 母单ID
-            fund: 资金账户
-            stockcode: 股票代码
-        """
-        self.basket_processor.show_basket_order_detail(instanceid, fund, stockcode)
-
-    def show_basket_query(self, source: str = "全部") -> None:
-        """
-        显示篮子订单查询结果
-        
-        Args:
-            source: 订单来源类型
-        """
-        self.basket_processor.show_basket_query(source)
-
-    def show_basket_initreqs(self, instance: str, isfullreqs: bool = False) -> None:
-        """
-        显示篮子订单原始请求信息
-        
-        Args:
-            instance: 母单ID
-            isfullreqs: 是否显示完整请求
-        """
-        self.basket_processor.show_basket_initreqs(instance, isfullreqs) 
-
     def get_basket_summary_data(self, source: Optional[str] = None, fund: str = "", stockcode: str = "") -> List[Dict[str, Any]]:
         """
         获取篮子订单查询数据
@@ -613,15 +465,6 @@ class ClientProcessorNew:
         """
         return self.basket_processor.get_basket_initreqs(instance)
 
-    # 算法交易相关接口
-    def show_queryalgorithm(self, querytime: str) -> None:
-        """
-        显示算法订单查询结果
-        
-        Args:
-            querytime: 查询时间
-        """
-        self.algorithm_processor.show_queryalgorithm(querytime)
     def get_algorithm_code(self) -> List[str]:
         """
         获取算法订单涉及的股票代码列表
@@ -669,56 +512,6 @@ class ClientProcessorNew:
         return self.algorithm_processor.get_new_algorithm_order()
 
     # 条件交易相关接口
-    def show_condition_summary(self) -> None:
-        """
-        显示条件单汇总信息
-        """
-        self.condition_processor.show_condition_summary()
-    def show_condition_instance_detail(self, order_no: str, fund: str, security: str) -> None:
-        """
-        显示条件单实例明细
-        
-        Args:
-            order_no: 母单编号
-            fund: 资金账户
-            security: 股票代码
-        """
-        self.condition_processor.show_condition_instance_detail(order_no, fund, security)
-    def show_condition_order_detail(self, order_no: str) -> None:
-        """
-        显示条件单母单操作明细
-        
-        Args:
-            order_no: 母单编号
-        """
-        self.condition_processor.show_condition_order_detail(order_no)
-    def show_condition_security_order_detail(self, order_no: str, fund: str, security: str) -> None:
-        """
-        显示条件单证券操作明细
-        
-        Args:
-            order_no: 母单编号
-            fund: 资金账户
-            security: 股票代码
-        """
-        self.condition_processor.show_condition_security_order_detail(order_no, fund, security)
-    def show_condition_initreqs(self, order_no: str, isfullreqs: bool = False) -> None:
-        """
-        显示条件单初始请求
-        
-        Args:
-            order_no: 母单编号
-            isfullreqs: 是否显示完整请求
-        """
-        self.condition_processor.show_condition_initreqs(order_no, isfullreqs)
-    def show_querycondition(self, querytime: str) -> None:
-        """
-        显示条件单查询结果
-        
-        Args:
-            querytime: 查询时间
-        """
-        self.condition_processor.show_querycondition(querytime)
     def get_condition_summary_data(self) -> Dict[str, Any]:
         """
         获取条件单汇总数据
@@ -781,17 +574,6 @@ class ClientProcessorNew:
         return self.condition_processor.get_querycondition_data(querytime) 
 
     # 融资融券相关接口
-    def show_finable_security(self, fund_key: str, query_time: str, show_securities: bool = False, stock_code: str = "") -> None:
-        """
-        显示可融资标的券信息（Jupyter友好）
-        
-        Args:
-            fund_key: 资金账户
-            query_time: 查询时间
-            show_securities: 是否显示全部证券代码
-            stock_code: 指定证券代码
-        """
-        self.financing_processor.show_finable_security(fund_key, query_time, show_securities, stock_code)
     def get_finable_security_data(self, fund_key: Optional[str] = None) -> Dict[str, Any]:
         """
         获取可融资标的券数据（Web友好）

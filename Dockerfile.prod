@@ -49,21 +49,17 @@ RUN apt-get update && apt-get install -y \
 
 # 复制requirements.txt文件
 COPY requirements.txt .
+# 复制应用代码
+COPY app/ ./app/
+COPY static/ ./static/
+COPY scripts/ ./scripts/
 
 # 安装Python依赖
 RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir gunicorn
-
-# 从构建阶段复制预构建的文件
-COPY --from=flask-builder /app/static/updates ./static/updates
-COPY --from=frontend-builder /app/dist ./static
-
-# 复制应用代码
-COPY app/ ./app/
-
+    pip install --no-cache-dir gunicorn && \
 # 创建session存储目录
-RUN mkdir -p /app/flask_session && \
-    # 创建非root用户
+    mkdir -p /app/flask_session && \
+# 创建非root用户
     adduser --disabled-password --gecos '' appuser && \
     chown -R appuser:appuser /app
 

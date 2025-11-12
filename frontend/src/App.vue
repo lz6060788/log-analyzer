@@ -29,10 +29,14 @@ import { RouterView } from 'vue-router'
 import { ref, onMounted, onUnmounted, provide, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import GlobalSearch from '@/components/common/GlobalSearch.vue'
-import ModuleDialog from '@/components/common/ModuleDialog.vue'
 import { useGlobalSearch } from '@/composable/useGlobalSearch'
 import { useModuleManager } from '@/composable/useModuleManager'
 import type { SearchItem } from '@/types/search'
+import { defineAsyncComponent } from 'vue'
+
+const ModuleDialog = defineAsyncComponent(() =>
+  import('@/components/common/ModuleDialog.vue')
+)
 
 // 使用全局搜索组合式函数
 const {

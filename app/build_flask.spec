@@ -10,25 +10,11 @@ a = Analysis(
         ('api', 'api'),
         ('entity', 'entity'),
         ('utils', 'utils'),
-        ('flask_session', 'flask_session'),
         ('__init__.py', '.'),
     ],
     hiddenimports=[
-        # Flask 核心依赖
-        'flask',
-        'flask_cors',
-        'werkzeug',
-        'jinja2',
-        'markupsafe',
-        'itsdangerous',
-        'click',
-        'blinker',
-        'flask_session',
-
-        # 数据处理依赖
         'pandas',
-        'numpy',
-        'pandas.io.formats.style',
+        'cryptography'
     ],
     hookspath=[],
     hooksconfig={},
@@ -55,7 +41,7 @@ exe = EXE(
     strip=False,
     upx=True,
     upx_exclude=[],
-    runtime_tmpdir=None,
+    runtime_tmpdir='./tempData',  # 添加这一行
     console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,

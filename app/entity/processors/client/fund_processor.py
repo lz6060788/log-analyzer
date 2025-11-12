@@ -3,7 +3,6 @@
 负责资金账户查询和处理
 """
 
-import json
 from typing import Dict, List, Any, Optional
 import pandas as pd
 
@@ -198,73 +197,6 @@ class FundProcessor:
             fund_list.append(f'{key}|ggt|{len(item)}')
         
         return fund_list
-    
-    def show_fund_query(self, fund_key: str) -> None:
-        """
-        显示资金查询结果
-        
-        Args:
-            fund_key: 资金账户键值
-        """
-        query_type_dict = {
-            "normal": self.query_account_asset_dict,
-            "rzrq": self.query_rzrq_account_asset_dict,
-            "ggt": self.query_ggt_account_asset_dict,
-        }
-        
-        columns_query_type_dict = {
-            "normal": ["rsp_time", "available_value", "balance_value", "currency_msg",
-                      "frozen_value", "market_value", "total_assets", "total_net_value"],
-            "rzrq": ["rsp_time", "EnableBalance", "AvailableValue", "AvailableMargin",
-                    "FinEnableQuota", "SloEnableQuota", "FinCompactalance", "SloCompactBalance",
-                    "FundAsset", "TotalAssets", "NetMoney", "WT_ZJ_JZC"],
-            "ggt": ["rsp_time", "TotalAssets", "AvailableValue", "GGT_SRZS", "GGT_ZTCZ", "GGT_ZTRZ",
-                   "GGT_SSCZ", "GGT_SSRZ", "GGT_YSCZZJ", "GGT_HCJE", "GGT_HRJE", "GGT_SYJE", "GGT_ZJKM", "GGT_SSZYJE"],
-            "failed": ["rsp_time", "fund", "req_id", "code", "message"],
-        }
-        
-        rename_columns = {
-            "normal": {},
-            "rzrq": {
-                "FinEnableQuota": "融资额度", "SloEnableQuota": "融券额度",
-                "FinCompactalance": "融资负债", "SloCompactBalance": "融券负债"
-            },
-            "ggt": {
-                "GGT_SRZS": "上日总数",
-                "GGT_ZTRZ": "在途入账",
-                "GGT_ZTCZ": "在途出账",
-                "GGT_SSRZ": "实时入账",
-                "GGT_SSCZ": "实时出账",
-                "GGT_YSCZZJ": "夜市出账资金",
-                "GGT_HRJE": "划入金额",
-                "GGT_HCJE": "划出金额",
-                "GGT_SYJE": "剩余金额",
-                "GGT_ZJKM": "资金科目",
-                "GGT_SSZYJE": "实时占用金额",
-            },
-        }
-        
-        fund = fund_key.split('|')[0]
-        query_type = fund_key.split('|')[1]
-        query_data = query_type_dict[query_type][fund]
-        
-        print(f"\n查询账户 {fund_key}")
-        
-        df_query_data = pd.DataFrame(query_data, columns=columns_query_type_dict[query_type])
-        print(f"\n查询成功请求数 {len(query_data)}")
-        df_query_data_renamed = df_query_data.rename(columns=rename_columns[query_type], inplace=True)
-        
-        # 显示成功查询结果
-        if not df_query_data.empty:
-            print(df_query_data)
-        
-        # 显示失败查询结果
-        query_data_failed = [item for item in self.query_asset_failed_list 
-                           if (item["fund"] == fund and item["type"] == query_type)]
-        if query_data_failed:
-            df_failed = pd.DataFrame(query_data_failed, columns=columns_query_type_dict["failed"])
-            print(f"\n查询失败请求数 {len(query_data_failed)}")
-            print(df_failed)
     
     def get_fund_query_data(self) -> Dict[str, Dict[str, pd.DataFrame]]:
         """

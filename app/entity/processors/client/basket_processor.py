@@ -178,68 +178,6 @@ class BasketProcessor:
         source_list.insert(0, "全部")
         return source_list
 
-    def show_basket_summary(self, source: str = "全部", fund: str = "", stockcode: str = "", showorders: bool = False) -> None:
-        """
-        Jupyter友好：展示篮子订单汇总信息
-        """
-        import pandas as pd
-        from IPython.display import display
-        # 只有未筛选fund、stockcode时，展示单户情况
-        if source == "全部" and fund == "" and stockcode == "":
-            print("\n当日新增单户委托情况 insert_order_jgb")
-            print("委托成功请求")
-            df_singleorder = pd.DataFrame(self.singleorder_list)
-            df_singleorder_success = df_singleorder[df_singleorder["code"] == 0]
-            display(df_singleorder_success)
-            print("委托失败请求")
-            df_singleorder_failed = df_singleorder[df_singleorder["code"] != 0]
-            message_list = [item.get("message", "") for item in self.singleorder_list if item["code"] != 0]
-            display(message_list)
-            display(df_singleorder_failed)
-            print("\n当日单户委托撤单情况 cancel_order_jgb")
-            df_singleorder_cancel = pd.DataFrame(self.singleorder_cancellist)
-            display(df_singleorder_cancel)
-        # 根据source、fund、stockcode筛选母单
-        filtered_instanceid_bysource = [item["instanceid"] for item in self.basketorder_list if (source == "全部" or (item["source"] == source))]
-        filtered_instanceid = []
-        for instanceid, basketitem in self.basketorder_detail_dict.items():
-            if instanceid in filtered_instanceid_bysource:
-                filterfund = False
-                filtercode = False
-                for item in basketitem:
-                    if fund == "" or (fund != "" and fund in item["fund"]):
-                        filterfund = True
-                    if stockcode == "" or (stockcode != "" and stockcode == item["SecurityID"]):
-                        filtercode = True
-                if filterfund and filtercode:
-                    filtered_instanceid.append(instanceid)
-        filtered_basketorder = [item for item in self.basketorder_list if item["instanceid"] in filtered_instanceid]
-        # 展示筛选后的母单信息
-        if fund != "" or stockcode != "":
-            print("订单来源:", source)
-            print("资金账号:", fund)
-            print("证券代码:", stockcode)
-        security_list = []
-        for instanceid in filtered_instanceid:
-            for item in self.basketorder_detail_dict[instanceid]:
-                security_list.append(item["SecurityID"])
-        distinct_security_list = list(set(security_list))
-        print("\n涉及的多户交易股票列表", len(distinct_security_list), distinct_security_list)
-        print("\n当日新增篮子单情况 BasketOrder")
-        df_basketorder = pd.DataFrame(filtered_basketorder)
-        display(df_basketorder)
-        print("\n当日篮子单操作情况 OrderAction")
-        filted_op_list = [item for item in self.basketorder_op_list if item.get("InstanceID") in filtered_instanceid]
-        df_basketorder_op = pd.DataFrame(filted_op_list)
-        display(df_basketorder_op)
-        # 根据最后一个配置项判断是否展示详细子单，当筛选条件都为空时，则不展示详细子单
-        if showorders:
-            if fund == "" and stockcode == "":
-                print("没有筛选条件[资金账号]或者[证券代码], 不展示子单详细信息")
-            else:
-                for instanceid in filtered_instanceid:
-                    self.show_basket_order_detail(instanceid, fund, stockcode)
-
     def get_basketorder_code(self):
         """
         获取所有涉及的证券代码列表，与clientprocessor.py一致
@@ -250,60 +188,6 @@ class BasketProcessor:
                 security_list.append(item["SecurityID"])
         distinct_security_list = list(set(security_list))
         return distinct_security_list
-
-    def show_basket_instance_detail(self, instanceid: str, fund: str = "", stockcode: str = "") -> None:
-        """
-        Jupyter友好：展示指定母单的实例详情
-        """
-        if instanceid == "":
-            print("\n母单[%s]不在当日新建篮子列表中" % instanceid)
-        else:
-            print("\n母单参数详情", instanceid)
-            req_id = self.basketorder_info[instanceid]["req_id"]
-            value = self.req_pairs[req_id]
-            request = value["request"]
-            response = value["response"]
-            req_time = value["req_time"]
-            rsp_time = value["rsp_time"]
-            the_create = request["params"]
-            list_the_create = []
-            for key, value in the_create.items():
-                value_format = value
-                if type(value) in (list, dict):
-                    value_format = "valuetype is %s, len=%d" % (str(type(value)), len(value))
-                list_the_create.append({"请求字段":key, "值":value_format})
-            display(pd.DataFrame(list_the_create))
-            print("\n母单OrderBase")
-            display(pd.DataFrame(self.basketorder_detail_dict[instanceid], 
-                columns=["fund", "SecurityID", "Side", "OrderQty", "OrderPrice", "MarketID", "PriceType"]))
-
-    def show_basket_order_detail(self, instanceid: str, fund: str = "", stockcode: str = "") -> None:
-        print("*"*120)
-        print(f"\n母单[{instanceid}]的全部子单详情")
-        # 推送明细展示
-        if hasattr(self, "basketorder_push") and instanceid in self.basketorder_push:
-            for fund_key, pushdata in self.basketorder_push[instanceid].items():
-                fund_token = fund_key.split("|")[0]
-                fundinfo = self._get_fund_by_fund_token(fund_token)
-                if fund == "" or (fund != "" and fund in fundinfo):
-                    print(f"\n子单详情 fund:{fundinfo}, fund_token:{fund_token}, 推送数:{len(pushdata)}")
-                    import pandas as pd
-                    df_basketorder_push = pd.DataFrame(pushdata, columns = [
-                        "PushTime","SecurityID", "MarketID", "Side", "OrderPrice", "OrderQty", "TradeVolume", "OrderID",
-                        "OrderTypeMsg", "OperationMsg", "OrderTime", "OrderStatusMsg", "Text"
-                    ])
-                    df_basketorder_push.rename(columns = {
-                        "TradeVolume":"Volume", "OrderPrice":"Price", "MarketID":"Market", 
-                        "OrderTypeMsg":"OrderType", "OperationMsg":"OP", "OrderStatusMsg":"OrderStatus"
-                    }, inplace=True)
-                    if stockcode != "":
-                        df_basketorder_push = df_basketorder_push[df_basketorder_push["SecurityID"] == stockcode]
-                    print("text_list", list(set(df_basketorder_push["Text"].tolist())))
-                    from IPython.display import display
-                    display(df_basketorder_push)
-        else:
-            print("无推送数据")
-
     def get_basketorder_detail(self, instanceid):
         """
         获取指定母单的子单明细，DataFrame格式，与clientprocessor.py一致
@@ -337,39 +221,6 @@ class BasketProcessor:
         querytime_list = list(self.basketorder_query_dict.keys())
         return querytime_list
 
-    def show_basket_query(self, querytime):
-        """
-        Jupyter友好：展示某次篮子订单查询的结果，与clientprocessor.py一致
-        """
-        req_id = querytime.split('|')[2]
-        querydata = self.basketorder_query_dict[querytime]
-        print("本次查询req_id", req_id)
-        if len(querydata) > 0:
-            import pandas as pd
-            from IPython.display import display
-            df_querydata = pd.DataFrame(querydata, columns=[
-                "CreateDate", "CreateTime", "InstanceID", "ClientOrderType",  "OrderQty", "DealVolume", "CancelOrderQty", "OperationMsg","Text"
-            ])
-            df_querydata_sorted = df_querydata.sort_values(by="CreateTime", ascending=True)
-            instance_list = list(set(df_querydata["InstanceID"].to_list()))
-            display(df_querydata_sorted)
-        else:
-            print("本次篮子单查询结果为空")
-
-    def show_basket_initreqs(self, instance, isfullreqs=False):
-        """
-        Jupyter友好：展示母单的原始请求明细，与clientprocessor.py一致
-        """
-        req_id = ""
-        if instance in self.req_pairs.keys():
-            req_id = instance
-        if instance in self.basketorder_info.keys():
-            req_id = self.basketorder_info[instance]["req_id"]
-        if req_id != "":
-            self.base_processor.show_request_and_response(req_id, isfullreqs)
-        else:
-            print(f"找不到id[{instance}]关联的原始请求信息")
-
     def get_basket_summary_data(self, source: Optional[str] = None, fund: str = "", stockcode: str = "") -> List[Dict[str, Any]]:
         """
         获取订单汇总数据，适合web接口返回
@@ -380,8 +231,7 @@ class BasketProcessor:
         Returns:
             母单数据列表
         """
-        result = {};
-        print(self.config.columns)
+        result = {}
 
         df_singleorder = pd.DataFrame(self.singleorder_list, columns=self.config.columns["singleorder"])
         df_singleorder_success = df_singleorder[df_singleorder["code"] == 0]

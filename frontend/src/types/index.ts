@@ -10,3 +10,10 @@ export enum LogAnalyserStatusType {
   Error = 'Error'
 }
 
+declare global {
+  interface Window {
+    electronAPI: {
+      [index: string]: void;
+    };
+  }
+}

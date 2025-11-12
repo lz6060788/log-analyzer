@@ -137,13 +137,13 @@ export function useGlobalSearch() {
    */
   const bindHotkeys = () => {
     // 绑定 Ctrl+K 快捷键
-    hotkeys('ctrl+k, cmd+k', (event) => {
+    hotkeys('ctrl+k, cmd+k', (event: any) => {
       event.preventDefault()
       openSearch()
     })
     
     // 绑定 ESC 快捷键（在搜索组件中处理）
-    hotkeys('escape', (event) => {
+    hotkeys('escape', (event: any) => {
       // 这里不需要阻止默认行为，让搜索组件处理
     })
   }
